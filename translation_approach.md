@@ -100,19 +100,19 @@ HTML node to examine the current context to be correctly translated.
   context when translated as `$...$` or `$$...$$`. A span holding an element or
   a comment is not of that form, so it is translated like any other `<span>`.
 * Given an HTML node which cannot be translated to CommonMark:
-  * HTML type 1-6 in a block context is emitted as an HTML block; the
-    inline/block classification does not apply to these contents. In contrast,
-    HTML type 1-6 in an inline context is emitted as raw HTML inlines; the
-    resulting context is inline.
-  * HTML type 7 is always emitted as raw HTML inlines; the resulting context is
-    inline. This choice is a tradeoff: it provides more natural behavior inside
-    tight lists and when encountering text that's a direct child of `<body>`;
-    for example, it translates `<body>This is <em>really</em> important.</body>`
-    as `This is *really* important.` instead of (as HTML blocks) `This
+    * HTML type 1-6 in a block context is emitted as an HTML block; the
+      inline/block classification does not apply to these contents. In contrast,
+      HTML type 1-6 in an inline context is emitted as raw HTML inlines; the
+      resulting context is inline.
+    * HTML type 7 is always emitted as raw HTML inlines; the resulting context is
+      inline. This choice is a tradeoff: it provides more natural behavior inside
+      tight lists and when encountering text that's a direct child of `<body>`;
+      for example, it translates `<body>This is <em>really</em> important.</body>`
+      as `This is *really* important.` instead of (as HTML blocks) `This
     is⏎⏎<em>⏎⏎really⏎⏎</em>⏎⏎important.` This approach, however, fails to
-    preserve a possible faithful encoding of lone inline tags: `<br><br>` stays
-    `<br><br>` in CommonMark, which re-translates to `<p><br><br></p>`.
-    Translating to `<br>⏎⏎<br>` would preserve the original HTML.
+      preserve a possible faithful encoding of lone inline tags: `<br><br>` stays
+      `<br><br>` in CommonMark, which re-translates to `<p><br><br></p>`.
+      Translating to `<br>⏎⏎<br>` would preserve the original HTML.
 
 Newline encoding works exactly when the parser reading that position decodes
 character references there: the CommonMark parser in the text between raw HTML
@@ -227,15 +227,15 @@ Approach:
    and the content does not open an HTML block, which would dissolve the heading
    (see the paragraphs section). Otherwise, use ATX.
 4. Write the chosen encoding with a blank line before and after it:
-   * Setext: the content, a newline, then an underline of `=` for level 1 or `-`
-     for level 2. The underline has one character per Unicode scalar value of
-     the content as written, so escapes and tags count toward it. CommonMark
-     accepts any length, so this is only a convention.
-   * ATX: one `#` per level, then a space and the content if there is any. If
-     the content written by step 2 is a run of `#`s, or ends in one which
-     follows a space or tab, escape the run's first `#`, so that the run is not
-     parsed as an
-     [optional closing sequence](https://spec.commonmark.org/0.31.2/#atx-headings).
+    * Setext: the content, a newline, then an underline of `=` for level 1 or `-`
+      for level 2. The underline has one character per Unicode scalar value of
+      the content as written, so escapes and tags count toward it. CommonMark
+      accepts any length, so this is only a convention.
+    * ATX: one `#` per level, then a space and the content if there is any. If
+      the content written by step 2 is a run of `#`s, or ends in one which
+      follows a space or tab, escape the run's first `#`, so that the run is not
+      parsed as an
+      [optional closing sequence](https://spec.commonmark.org/0.31.2/#atx-headings).
 
 ### Code blocks and code spans
 
@@ -399,50 +399,50 @@ Notes:
 Approach:
 
 1. If the list consists of one list item:
-   1. If that list item consists of one paragraph, set the list type to tight
-      (per the notes). Skip to step 3.
-   2. If that list item consists of a paragraph followed by another block which
-      can interrupt a paragraph:
-      1. Determine if the DOM for the paragraph starts with a `<p>`. If so, this
-         is more easily represented by a loose list; place a blank line between
-         the paragraph and the next block to make this list loose. Set the list
-         type to loose, then skip to step 3.
-      2. Otherwise, this is more easily represented as a tight list. Write the
-         paragraph followed by the block with no intervening blank line; since
-         the block interrupts the paragraph, this forms a tight list. Set the
-         list type to tight then skip to step 3.
+    1. If that list item consists of one paragraph, set the list type to tight
+       (per the notes). Skip to step 3.
+    2. If that list item consists of a paragraph followed by another block which
+       can interrupt a paragraph:
+        1. Determine if the DOM for the paragraph starts with a `<p>`. If so, this
+           is more easily represented by a loose list; place a blank line between
+           the paragraph and the next block to make this list loose. Set the list
+           type to loose, then skip to step 3.
+        2. Otherwise, this is more easily represented as a tight list. Write the
+           paragraph followed by the block with no intervening blank line; since
+           the block interrupts the paragraph, this forms a tight list. Set the
+           list type to tight then skip to step 3.
 2. Walk each CommonMark list item to determine how to more compactly represent
    the list. Default to an unknown (not loose or tight) list, with 0 votes for a
    loose list.
-   1. If this list item directly contains two block-level elements with a blank
-      line between them, this forces the list to be loose. If the list type is
-      already tight, this list cannot be represented in CommonMark. End the
-      walk, serializing the entire list as an HTML block. Otherwise, set the
-      list representation to a loose list.
-   2. Walk the children of this list item which are paragraphs:
-      1. If the DOM for that paragraph begins with a `<p>`, then this paragraph
-         is more compactly represented as a loose list, but can also be
-         represented as the equivalent HTML block. Add 1 to the loose list vote.
-      2. If the DOM for that paragraph begins with an element whose tag name is
-         in the type 1 or 6 list, this paragraph is more compactly represented
-         as a tight list, but can also be represented as the equivalent HTML
-         block. Subtract 1 from the loose list vote.
-      3. If the DOM for that paragraph begins with a text node or an element
-         whose tag name is not in the type 1 or 6 list, the paragraph can only
-         be represented as a tight list; there's no way to remove the beginning
-         `<p>` element from a loose list. If the list type is loose, this list
-         cannot be represented in CommonMark. End the walk, serializing the
-         entire list as an HTML block. Otherwise, set the list representation to
-         a tight list.
+    1. If this list item directly contains two block-level elements with a blank
+       line between them, this forces the list to be loose. If the list type is
+       already tight, this list cannot be represented in CommonMark. End the
+       walk, serializing the entire list as an HTML block. Otherwise, set the
+       list representation to a loose list.
+    2. Walk the children of this list item which are paragraphs:
+        1. If the DOM for that paragraph begins with a `<p>`, then this paragraph
+           is more compactly represented as a loose list, but can also be
+           represented as the equivalent HTML block. Add 1 to the loose list vote.
+        2. If the DOM for that paragraph begins with an element whose tag name is
+           in the type 1 or 6 list, this paragraph is more compactly represented
+           as a tight list, but can also be represented as the equivalent HTML
+           block. Subtract 1 from the loose list vote.
+        3. If the DOM for that paragraph begins with a text node or an element
+           whose tag name is not in the type 1 or 6 list, the paragraph can only
+           be represented as a tight list; there's no way to remove the beginning
+           `<p>` element from a loose list. If the list type is loose, this list
+           cannot be represented in CommonMark. End the walk, serializing the
+           entire list as an HTML block. Otherwise, set the list representation to
+           a tight list.
 3. Examine the resulting computed list representation:
-   1. If it is loose or unknown with a positive vote, then re-walk the direct
-      children of each list item. If the child is a paragraph whose DOM does not
-      begin with `<p>`, serialize it as HTML. Otherwise, leave it as CommonMark.
-      Combine each list item with an intervening blank line.
-   2. If it is tight or unknown with a non-positive vote, then re-walk the
-      direct children of each list item. If the child is a paragraph whose DOM
-      begins with `<p>`, serialize it as HTML. Otherwise, leave it as
-      CommonMark. Combine each list item with an intervening newline.
+    1. If it is loose or unknown with a positive vote, then re-walk the direct
+       children of each list item. If the child is a paragraph whose DOM does not
+       begin with `<p>`, serialize it as HTML. Otherwise, leave it as CommonMark.
+       Combine each list item with an intervening blank line.
+    2. If it is tight or unknown with a non-positive vote, then re-walk the
+       direct children of each list item. If the child is a paragraph whose DOM
+       begins with `<p>`, serialize it as HTML. Otherwise, leave it as
+       CommonMark. Combine each list item with an intervening newline.
 
 Inlines
 -------
@@ -521,20 +521,20 @@ preceding and following emphasis. It is kept for possible future improvements.
 > Otherwise, consider `1*233..34*5`, where:
 >
 > * `1` is the character preceding em/strong and `5` is the character following
->   it. If either character is missing due to the beginning or end of the line,
->   treat the character as whitespace.
+    >   it. If either character is missing due to the beginning or end of the line,
+    >   treat the character as whitespace.
 > * `2` is the first character of the em/strong content and `4` is the last
->   character. If the content is one character, note that `2` and `4` refer to
->   the same character.
+    >   character. If the content is one character, note that `2` and `4` refer to
+    >   the same character.
 > * `3` is zero or more following characters of content.
 >
 > To encode:
 >
 > 1. If `2` is whitespace, encode it as a character reference; em/strong cannot
->    begin or end with whitespace.
+     >    begin or end with whitespace.
 > 2. If `2` is punctuation (note that the previous step changes whitespace to
->    punctuation for this step) and `1` is neither whitespace nor punctuation,
->    encode `1` as a character reference.
+     >    punctuation for this step) and `1` is neither whitespace nor punctuation,
+     >    encode `1` as a character reference.
 > 3. Apply rule 1 to `4` and rule 2 to `5`.
 
 ### Links
@@ -569,47 +569,47 @@ Escaping rules:
 
 * For link text, destinations, and titles:
 
-  * All `\` characters must be escaped, since they would otherwise escape the
-    following character.
-  * Newlines must be encoded as `&#10;`/`&#13;` since links are an inline
-    element; newlines in ATX headings, table cells, etc. would prematurely
-    terminate these items. In addition, newlines are not allowed in link
-    destinations. This is a conservative rule that simplifies the translation
-    but may insert unnecessary escapes. For example, newlines (but not blank
-    lines) are allowed in a link placed in a paragraph.
-  * All `&` characters must be escaped; for example, the HTML fragment
-    `&amp;copy;` which arrives as `&copy;` from the HTML parser becomes
-    `\&copy;` not the actual `&copy;` character entity.
+    * All `\` characters must be escaped, since they would otherwise escape the
+      following character.
+    * Newlines must be encoded as `&#10;`/`&#13;` since links are an inline
+      element; newlines in ATX headings, table cells, etc. would prematurely
+      terminate these items. In addition, newlines are not allowed in link
+      destinations. This is a conservative rule that simplifies the translation
+      but may insert unnecessary escapes. For example, newlines (but not blank
+      lines) are allowed in a link placed in a paragraph.
+    * All `&` characters must be escaped; for example, the HTML fragment
+      `&amp;copy;` which arrives as `&copy;` from the HTML parser becomes
+      `\&copy;` not the actual `&copy;` character entity.
 * Link text:
 
-  * All `[` and `]` characters must be escaped, per the spec. (The spec allows
-    matched pairs of brackets; this is omitted for simplicity.)
-  * All `<` characters which begin an autolink or a raw HTML inline must be
-    escaped; all `$` characters which begin a math expression must be escaped.
-    These inlines bind more tightly than a link.
-  * All `` ` `` must be escaped; per the spec, code spans bind more tightly than
-    a link.
-  * Hard line breaks (`<br>`) are translated correctly only in Faithful mode.
+    * All `[` and `]` characters must be escaped, per the spec. (The spec allows
+      matched pairs of brackets; this is omitted for simplicity.)
+    * All `<` characters which begin an autolink or a raw HTML inline must be
+      escaped; all `$` characters which begin a math expression must be escaped.
+      These inlines bind more tightly than a link.
+    * All `` ` `` must be escaped; per the spec, code spans bind more tightly than
+      a link.
+    * Hard line breaks (`<br>`) are translated correctly only in Faithful mode.
 
   Because link text may contain HTML, it must be translated from HTML to
   CommonMark.
 
 * Link destinations:
 
-  * All `(` and `)` characters must be escaped; these mark the beginning and end
-    of an inline link. (The spec allows matched pairs of parentheses; this is
-    omitted for simplicity.)
-  * If the escaped destination is empty, starts with `<`, or includes
-    [ASCII control characters](https://spec.commonmark.org/0.31.2/#ascii-control-character)
-    or [space](https://spec.commonmark.org/0.31.2/#space) characters:
-    * All `<` and `>` characters must be escaped per the spec.
-    * Prepend `<` and append `>` to the destination.
+    * All `(` and `)` characters must be escaped; these mark the beginning and end
+      of an inline link. (The spec allows matched pairs of parentheses; this is
+      omitted for simplicity.)
+    * If the escaped destination is empty, starts with `<`, or includes
+      [ASCII control characters](https://spec.commonmark.org/0.31.2/#ascii-control-character)
+      or [space](https://spec.commonmark.org/0.31.2/#space) characters:
+        * All `<` and `>` characters must be escaped per the spec.
+        * Prepend `<` and append `>` to the destination.
 * Link titles:
 
-  * All `"` characters must be escaped, since the `"` ends a title string. This
-    is a conservative selection that simplifies the translation but may insert
-    unnecessary escapes. For example, the title `Say "hi"` could be encoded as
-    `'Say "hi"'` instead of `"Say \"hi\""`.
+    * All `"` characters must be escaped, since the `"` ends a title string. This
+      is a conservative selection that simplifies the translation but may insert
+      unnecessary escapes. For example, the title `Say "hi"` could be encoded as
+      `'Say "hi"'` instead of `"Say \"hi\""`.
 
 Some of these escapes are already performed by generic text-node escaping,
 covered in section TODO.
@@ -732,3 +732,87 @@ its ends lie in math mode, where whitespace has no significance, and condition 3
 catches the one significant trailing whitespace, a control space. LaTeX reads a
 single newline as a space, and math mode ignores the space which replaces a
 comment, so only a comment in text mode renders differently (see step 1).
+
+### Subscript
+
+Subscript is a pulldown-cmark extension with no CommonMark or GFM syntax: with
+[`Options::ENABLE_SUBSCRIPT`](https://docs.rs/pulldown-cmark/0.13.4/pulldown_cmark/struct.Options.html#associatedconstant.ENABLE_SUBSCRIPT)
+set, text between single tildes reads as a
+[subscript](https://docs.rs/pulldown-cmark/0.13.4/pulldown_cmark/enum.Tag.html#variant.Subscript),
+so `~a~` reads as `<sub>a</sub>`. The translation assumes its reader enables
+subscript. Without it, pulldown-cmark reads `~a~` as strikethrough when
+`ENABLE_STRIKETHROUGH` is set and as text otherwise. The normative behavior is
+pulldown-cmark 0.13.4's
+[super_sub spec](https://github.com/pulldown-cmark/pulldown-cmark/blob/v0.13.4/pulldown-cmark/specs/super_sub.txt)
+and its
+[delimiter scanner](https://github.com/pulldown-cmark/pulldown-cmark/blob/v0.13.4/pulldown-cmark/src/firstpass.rs#L2254-L2337).
+
+A single `~` follows the rules of `_`, not `*`: it cannot be intraword. It opens
+a subscript only if the character after it is not whitespace and the character
+before it is whitespace, punctuation, or the start of the line; it closes one
+only if the character before it is not whitespace and the character after it is
+whitespace, punctuation, or the end of the line (or the character before it is a
+`~`). Whitespace here is any character for which
+[`char::is_whitespace`](https://doc.rust-lang.org/std/primitive.char.html#method.is_whitespace)
+is true, which includes a non-breaking space; punctuation is a
+[Unicode punctuation character](https://spec.commonmark.org/0.31.2/#unicode-punctuation-character),
+which includes symbols such as `©`. A `~` run pairs only with a run
+of the same length, a run of two is strikethrough (or text), and a run of three
+or more is text.
+
+| Description                 | HTML in                    | Faithful expected          |
+| --------------------------- | -------------------------- | -------------------------- |
+| Simple subscript            | `<sub>a</sub>`             | `~a~`                      |
+| Subscript between words     | `x <sub>i</sub> y`         | `x ~i~ y`                  |
+| Intraword subscript         | `H<sub>2</sub>O`           | `H<sub>2</sub>O`           |
+| Literal tilde               | `a~b`                      | `a\~b`                     |
+| Tilde inside subscript      | `<sub>a~b</sub>`           | `~a\~b~`                   |
+| Interior whitespace         | `x<sub>␣a␣</sub>y`         | `x␣~a~␣y`                  |
+| Whitespace-only subscript   | `a<sub>␣</sub>b`           | `a<sub>␣</sub>b`           |
+| Empty subscript             | `a<sub></sub>b`            | `a<sub></sub>b`            |
+| Subscript with attributes   | `<sub class="x">a</sub>`   | `<sub class="x">a</sub>`   |
+| Subscript holding emphasis  | `<sub><em>a</em></sub>`    | `~*a*~`                    |
+| Subscript inside subscript  | `<sub><sub>a</sub></sub>`  | `~<sub>a</sub>~`           |
+| Adjacent subscripts         | `<sub>a</sub><sub>b</sub>` | `<sub>a</sub><sub>b</sub>` |
+
+Approach:
+
+1. If the element has attributes, or is inside another `<sub>`, serialize it as
+   HTML; in `~a.~.b~ c~`, the inner opener closes the outer subscript.
+2. If the content is empty once its leading and trailing whitespace (as defined
+   above) is removed, serialize the element as HTML: `~~` is not an empty
+   subscript.
+3. If the trimmed content contains an unescaped `~`, serialize the element as
+   HTML: `~~a~~` reads as strikethrough, and a `~~` run inside the content,
+   such as a strikethrough written by another handler, stops the closing `~`
+   from matching.
+4. Move leading and trailing whitespace outside the content.
+5. If the character of the emitted Markdown before the opening `~`, or after the
+   closing `~`, is neither whitespace nor punctuation, is an unescaped `~`, or
+   is an unescaped `\`, serialize the element as HTML. A letter there stops the
+   `~` from opening or closing, and a neighboring `~` merges with it: `~a~~b~`
+   reads as text. These neighbors may come from any node, including content
+   written by a pass-through `<span>`.
+6. Otherwise, surround the content with `~`.
+
+Every `~` in a run of one or two in a text node outside a code span, code block,
+math, or autolink, and in an image's `alt` text, is escaped as `\~`, which
+pulldown-cmark honors inside a subscript, so a literal tilde can neither open
+nor close a subscript or strikethrough: `<sub>a~~b</sub>` is written `~a\~\~b~`.
+Runs of three or more are text, and are escaped only at the start of a line,
+where they would open a code fence, and inside a subscript's content; there
+every `~` of the run is escaped, since the `~~` left after an escaped first
+tilde can still open or close. When the reader also enables superscript, a `^`
+in the content is escaped as `\^`; otherwise `~a^ b~` reads as text. Adjacent
+subscripts are a run of inline elements, serialized in Faithful mode as
+described in the emphasis section; in Pure mode they are combined, so
+`<sub>a</sub><sub>b</sub>` is written `~ab~`.
+
+In `TranslationMode::Pure`, which writes no HTML, attributes are dropped, empty
+and whitespace-only subscripts leave only their whitespace, and a subscript
+inside a subscript, or one which steps 3 or 5 would serialize, is written as its
+content alone. A run of adjacent subscripts is first combined, then checked by
+steps 3 and 5 as one subscript. A hard break at either end of the content is
+moved outside with the whitespace: a closing `~` cannot start a line, and with
+`BrStyle::TwoSpaces` an opening `~` would precede whitespace. If nothing is
+left, the subscript is dropped.
