@@ -783,16 +783,18 @@ Approach:
    above) is removed, serialize the element as HTML: `~~` is not an empty
    subscript.
 3. If the trimmed content contains an unescaped `~`, serialize the element as
-   HTML: `~~a~~` reads as strikethrough, and a `~~` run inside the content,
-   such as a strikethrough written by another handler, stops the closing `~`
-   from matching.
+   HTML: `~~a~~` reads as strikethrough, and an unmatched `~~` run inside the
+   content, such as one left by another handler, stops the closing `~` from
+   matching.
 4. Move leading and trailing whitespace outside the content.
 5. If the character of the emitted Markdown before the opening `~`, or after the
    closing `~`, is neither whitespace nor punctuation, is an unescaped `~`, or
    is an unescaped `\`, serialize the element as HTML. A letter there stops the
    `~` from opening or closing, and a neighboring `~` merges with it: `~a~~b~`
    reads as text. These neighbors may come from any node, including content
-   written by a pass-through `<span>`.
+   written by a pass-through `<span>`. Unlike the emphasis section, which
+   tests only the content's own first and last characters, this step needs the
+   emitted Markdown around the element.
 6. Otherwise, surround the content with `~`.
 
 Every `~` in a run of one or two in a text node outside a code span, code block,
