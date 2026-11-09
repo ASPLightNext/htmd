@@ -800,8 +800,8 @@ math, or autolink, and in an image's `alt` text, is escaped as `\~`, which
 pulldown-cmark honors inside a subscript, so a literal tilde can neither open
 nor close a subscript or strikethrough: `<sub>a~~b</sub>` is written `~a\~\~b~`.
 Runs of three or more are text, and are escaped only at the start of a line,
-where they would open a code fence, and inside a subscript's content; there
-every `~` of the run is escaped, since the `~~` left after an escaped first
+where they would open a code fence, and inside a subscript's content; in both
+places every `~` of the run is escaped, since the `~~` left after an escaped first
 tilde can still open or close. When the reader also enables superscript, a `^`
 in the content is escaped as `\^`; otherwise `~a^ b~` reads as text. Adjacent
 subscripts are a run of inline elements, serialized in Faithful mode as

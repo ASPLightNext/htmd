@@ -1,43 +1,45 @@
 Subscript: submission
 =====================
 
-Spec section: `### Subscript`, appended to `translation_approach.md` (branch
-`subscript-htmd` of the
-[ASPLightNext/htmd](https://github.com/ASPLightNext/htmd) fork, based on
-`2e7bf3a`).
+Spec section: `### Subscript`, the last section of `translation_approach.md`, on
+branch `subscript-htmd` of the
+[ASPLightNext/htmd](https://github.com/ASPLightNext/htmd) fork (based on
+upstream `2e7bf3a`).
 
-Team contributions
-------------------
+1. Team contributions
+---------------------
 
-* Matzhan Aruzhan: Ran the LLM (claude-opus-5-5) to write the Subscript section
-  of `translation_approach.md`, which specifies how `<sub>` is translated to
-  pulldown-cmark's `~a~` syntax and when it falls back to HTML, and drove its
-  six review rounds.
-* Zhexenbiyev Arsen: Created the team's fork of htmd, set up the
-  `subscript-htmd` branch, and opened the team's pull request upstream.
+* Matzhan Aruzhan: Prompted the LLM (claude-opus-5-5) to write the Subscript
+  section of `translation_approach.md`, which specifies how `<sub>` is
+  translated to pulldown-cmark's `~a~` syntax and when it falls back to HTML,
+  and ran its six review rounds.
+* Zhexenbiyev Arsen: Created the team's fork of htmd and the `subscript-htmd`
+  branch, and opened the team's pull request upstream.
 * Khamzin Daulet: Verified that the project builds and passes the CI checks
   (`cargo build`, `cargo clippy`, `cargo test`) on the branch, and recorded the
   output below.
 * Johnson Dustin: Checked the reviewers' findings against pulldown-cmark 0.13.4
   to decide which ones to accept or reject in each review round.
 
-Output of "Verify that you can compile and run the project in the current git repo."
--------------------------------------------------------------------------------------
+2. Output of "Verify that you can compile and run the project in the current git repo."
+----------------------------------------------------------------------------------------
+
+Prompting claude-opus-5-5 through the Kasper CLI agent produced:
 
 > All three CI checks pass, and the two examples I ran succeeded. I used
 > toolchain cargo 1.99.1 / rustc 1.99.1, with
 > `PATH=/opt/homebrew/opt/rustup/bin:$PATH` set for every command.
 >
-> HEAD is `af9164c` on branch `subscript-htmd`. The working tree isn't clean:
-> `.idea/workspace.xml` and `subscript_submission.md` have uncommitted changes,
-> neither of which affects the build. I didn't change any tracked files.
+> HEAD is `d67859e` on branch `subscript-htmd`. The only uncommitted changes are
+> to `subscript_submission.md` and `translation_approach.md`, which are
+> documentation and do not affect the build. I didn't change any tracked files.
 >
 > `htmd` is a library crate, so "run" here means the test suite and the
 > examples. The three checks `AGENTS.md:52-59` says CI requires:
 >
 > | Command                              | Result                                                                                                                                  |
 > | ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------- |
-> | `cargo build`                        | Succeeded: compiled `htmd v0.5.5` in 5.70s, exit 0                                                                                       |
+> | `cargo build`                        | Compiled `htmd v0.5.5`, exit 0                                                                                                          |
 > | `cargo clippy -q -- --deny warnings` | No warnings, exit 0                                                                                                                     |
 > | `cargo test`                         | Exit 0, no failures: 36 unit tests passed (1 ignored), 227 integration tests passed across 10 files in `tests/`, and 4 doc tests passed |
 >
@@ -53,30 +55,67 @@ Output of "Verify that you can compile and run the project in the current git re
 >
 > I also didn't run the benchmarks (`cargo bench`).
 
-Review rounds
--------------
+Prompt used to write the spec section
+-------------------------------------
 
-Each round used a fresh reviewer with the same prompt (below). I applied only
-small, targeted edits, no rewrites. When reviewers disagreed, I tested the claim
-against pulldown-cmark 0.13.4.
+Prompting claude-opus-5-5 through the Kasper CLI agent with:
 
-| Round | Findings | Main changes made |
-| ----- | -------- | ----------------- |
-| 1 | 7 | Step order contradicted the interior-whitespace row; neighbors now come from the emitted Markdown, not sibling nodes; nested `<sub>` through a `<span>`; code, math, and image `alt` text handled by the `~` escaping rule; whitespace defined as `char::is_whitespace` |
-| 2 | 5 | An unescaped `~` neighbor merges into `~~`; Pure-mode nested subscripts and trailing `<br>`; autolinks exempted from `\~` escaping (HTML-block escaping finding rejected as out of scope) |
-| 3 | 6 | Pure `<sub><br></sub>` left a bare `~~`; only single `~` escaped, so `~~~` tests keep passing; punctuation defined (includes symbols, checked against pulldown-cmark); corrected the explanation for `~a~~b~` (line-start escape finding rejected as an implementation detail) |
-| 4 | 6 | `~a~~b~` actually reads as text (the round 3 reviewer was wrong; verified); runs of two escaped too (`<sub>a~~b</sub>`, strikethrough); code fence at line start; `^` escaped when superscript is also enabled |
-| 5 | 5 | `\~~~` leaves a live `~~` that blocks the closing `~`; Pure combines adjacent subscripts (`~ab~`); "Unicode whitespace" renamed to the `char::is_whitespace` set; hard-break reason depends on `BrStyle`; a backslash neighbor escapes the opener |
-| 6 | 4 | Findings below, all applied |
+> Add a "Subscript" section to the end of translation_approach.md specifying how
+> htmd translates `<sub>` to pulldown-cmark 0.13.4's `~a~` syntax. Follow the
+> conventions of the existing sections, base every rule on pulldown-cmark's
+> source, and keep it concise. Include an examples table formatted like this:
+>
+> | Description             | HTML in            | Faithful expected  |
+> | ----------------------- | ------------------ | ------------------ |
+> | Simple subscript        | `<sub>a</sub>`     | `~a~`              |
+> | Intraword subscript     | `H<sub>2</sub>O`   | `H<sub>2</sub>O`   |
 
-Last review
------------
+3. Review rounds
+----------------
 
-Prompting claude-opus-5-5 through the Kasper CLI agent, with a
-read-only reviewer sub-agent, produced the following output. No strikethrough is
-needed: I reproduced findings 1, 2, and 4 with pulldown-cmark 0.13.4, and finding
-3 is a gap in the spec text. The reviewer's "not verified" note about `©` is
-also correct (`is_punctuation('©')` is true).
+Each round used a fresh reviewer with the same prompt (shown in part 4). We
+applied only small, targeted edits, never the reviewer's rewrites. When
+reviewers disagreed, we tested the claim against pulldown-cmark 0.13.4.
+
+The table was made by prompting claude-opus-5-5 through the Kasper CLI agent
+with:
+
+> From the six review rounds of the Subscript section in this conversation,
+> make a GitHub-flavored Markdown table with the columns "Round", "Findings",
+> and "Main changes made". "Findings" is the count the reviewer reported in
+> that round. "Main changes made" is one sentence: the main changes applied in
+> that round, separated by semicolons, with rejected findings in parentheses.
+> For the last round, write "Findings below, all applied". Align the columns,
+> like this example:
+>
+> | Round | Findings | Main changes made                                                                              |
+> | ----- | -------- | ---------------------------------------------------------------------------------------------- |
+> | 1     | 15       | Rule 1 vs rule 2 contradiction; added NFC, apostrophe and hyphen variants, digits inside words |
+> | 2     | 11       | Stress marks (`ма́ма`) no longer split words; rule 2 written as a grammar                        |
+> | 3     | 10       | NFC, not NFKC (ligature `ﬁ`); final sigma in `lower()`                                         |
+> | 4     | 5        | Findings below, all applied                                                                    |
+
+Output:
+
+| Round | Findings | Main changes made                                                                                                                                                                                                                                  |
+| ----- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1     | 7        | Step order contradicted the interior-whitespace row; neighbors now come from the emitted Markdown, not sibling nodes; nested `<sub>` through a `<span>`; code, math, and image `alt` text handled by the `~` escaping rule; whitespace defined as `char::is_whitespace` |
+| 2     | 5        | An unescaped `~` neighbor merges into `~~`; Pure-mode nested subscripts and trailing `<br>`; autolinks exempted from `\~` escaping (HTML-block escaping finding rejected as out of scope)                                                          |
+| 3     | 6        | Pure `<sub><br></sub>` left a bare `~~`; only single `~` escaped, so `~~~` tests keep passing; punctuation defined (includes symbols, checked against pulldown-cmark); corrected the explanation for `~a~~b~` (line-start escape finding rejected as an implementation detail) |
+| 4     | 6        | `~a~~b~` actually reads as text (the round 3 reviewer was wrong; verified); runs of two escaped too (`<sub>a~~b</sub>`, strikethrough); code fence at line start; `^` escaped when superscript is also enabled                                     |
+| 5     | 5        | `\~~~` leaves a live `~~` that blocks the closing `~`; Pure combines adjacent subscripts (`~ab~`); "Unicode whitespace" renamed to the `char::is_whitespace` set; hard-break reason depends on `BrStyle`; a backslash neighbor escapes the opener |
+| 6     | 4        | Findings below, all applied                                                                                                                                                                                                                        |
+
+4. Last review
+--------------
+
+Prompting claude-opus-5-5 through the Kasper CLI agent, with a read-only
+reviewer sub-agent given the system prompt and prompt below, produced the
+following output; strikethrough would mark output we deemed incorrect or
+irrelevant, but none was needed. We reproduced findings 1, 2, and 4 with
+pulldown-cmark 0.13.4, and finding 3 is a real gap in the spec text. The
+reviewer's "not verified" note is also resolved: pulldown-cmark's
+`is_punctuation('©')` is true.
 
 System prompt:
 
