@@ -2,52 +2,44 @@ Subscript: submission
 =====================
 
 Spec section: `### Subscript`, appended to `translation_approach.md` (branch
-`subscript` of the [ASPLightNext/htmd](https://github.com/ASPLightNext/htmd)
-fork, based on `2e7bf3a`).
+`subscript-htmd` of the
+[ASPLightNext/htmd](https://github.com/ASPLightNext/htmd) fork, based on
+`2e7bf3a`).
 
 Team contributions
 ------------------
 
-The fork has no commits or pull requests beyond upstream yet, so each line below
-must be filled in by its owner.
-
-* sbe80 (Footnotes): TODO
-* drj228 (Strikethrough): TODO
-* raf322 (Task lists): TODO
-* ams2083 (Smart punctuation): TODO
-* jhg246 (Heading attributes): TODO
-* jit45 (Definition list): TODO
-* ewj55 (Superscript): TODO
-* TODO-your-id (Subscript): Wrote the Subscript section of
-  `translation_approach.md`, which specifies how `<sub>` is translated to
-  pulldown-cmark's `~a~` syntax and when it falls back to HTML; every example
-  was checked against pulldown-cmark 0.13.4.
+* Matzhan Aruzhan: Ran the LLM (claude-opus-5-5) to write the Subscript section
+  of `translation_approach.md`, which specifies how `<sub>` is translated to
+  pulldown-cmark's `~a~` syntax and when it falls back to HTML, and drove its
+  six review rounds.
+* Zhexenbiyev Arsen: Created the team's fork of htmd, set up the
+  `subscript-htmd` branch, and opened the team's pull request upstream.
+* Khamzin Daulet: Verified that the project builds and passes the CI checks
+  (`cargo build`, `cargo clippy`, `cargo test`) on the branch, and recorded the
+  output below.
+* Johnson Dustin: Checked the reviewers' findings against pulldown-cmark 0.13.4
+  to decide which ones to accept or reject in each review round.
 
 Output of "Verify that you can compile and run the project in the current git repo."
 -------------------------------------------------------------------------------------
 
-Run in `/Users/kaspi/kbtu/htmd` (HEAD `f5cc012`, with uncommitted changes). The
-agent was told where the Homebrew rustup binaries are, since they are not on
-PATH. An earlier attempt failed because no Rust toolchain was installed; this is
-the output after installing one.
-
-> Yes, the project compiles and runs. All three CI checks pass, and the two
-> examples I ran succeeded. I used toolchain cargo 1.99.1 / rustc 1.99.1, with
+> All three CI checks pass, and the two examples I ran succeeded. I used
+> toolchain cargo 1.99.1 / rustc 1.99.1, with
 > `PATH=/opt/homebrew/opt/rustup/bin:$PATH` set for every command.
 >
-> The working tree isn't clean, so these results include uncommitted changes
-> that were already there: `src/element_handler/p.rs` and `unsupported_html.md`
-> are modified, and `.idea/` and `toc.md` are untracked. HEAD is `f5cc012`. I
-> didn't change any tracked files.
+> HEAD is `af9164c` on branch `subscript-htmd`. The working tree isn't clean:
+> `.idea/workspace.xml` and `subscript_submission.md` have uncommitted changes,
+> neither of which affects the build. I didn't change any tracked files.
 >
 > `htmd` is a library crate, so "run" here means the test suite and the
 > examples. The three checks `AGENTS.md:52-59` says CI requires:
 >
-> | Command                               | Result                                                                                                                    |
-> | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-> | `cargo build`                         | Succeeded: compiled all dependencies and `htmd v0.5.5` in 1m 12s, exit 0                                                  |
-> | `cargo clippy -q -- --deny warnings`  | No warnings, exit 0                                                                                                       |
-> | `cargo test`                          | Exit 0, no failures: 29 unit tests passed (1 ignored), 189 integration tests passed across 10 files in `tests/`, and 4 doc tests passed |
+> | Command                              | Result                                                                                                                                  |
+> | ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------- |
+> | `cargo build`                        | Succeeded: compiled `htmd v0.5.5` in 5.70s, exit 0                                                                                       |
+> | `cargo clippy -q -- --deny warnings` | No warnings, exit 0                                                                                                                     |
+> | `cargo test`                         | Exit 0, no failures: 36 unit tests passed (1 ignored), 227 integration tests passed across 10 files in `tests/`, and 4 doc tests passed |
 >
 > Examples:
 >
@@ -80,7 +72,7 @@ against pulldown-cmark 0.13.4.
 Last review
 -----------
 
-Prompting claude-opus-5-5 (effort: TODO) through the Kasper CLI agent, with a
+Prompting claude-opus-5-5 through the Kasper CLI agent, with a
 read-only reviewer sub-agent, produced the following output. No strikethrough is
 needed: I reproduced findings 1, 2, and 4 with pulldown-cmark 0.13.4, and finding
 3 is a gap in the spec text. The reviewer's "not verified" note about `©` is
