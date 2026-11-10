@@ -18,8 +18,7 @@ upstream `2e7bf3a`).
 * Khamzin Daulet: Verified that the project builds and passes the CI checks
   (`cargo build`, `cargo clippy`, `cargo test`) on the branch, recorded the
   output below, and ran review round 7 of the Subscript section (part 5).
-* Johnson Dustin: Checked the reviewers' findings against pulldown-cmark 0.13.4
-  to decide which ones to accept or reject in each review round.
+* Dustin Johnson: Verified the Windows build and tested subscript boundary cases with pulldown-cmark 0.13.4, then clarified the specification’s whitespace and fallback rules and added three examples.
 
 2. Output of "Verify that you can compile and run the project in the current git repo."
 ----------------------------------------------------------------------------------------
@@ -120,6 +119,7 @@ Output:
 | 5     | 5        | `\~~~` leaves a live `~~` that blocks the closing `~`; Pure combines adjacent subscripts (`~ab~`); "Unicode whitespace" renamed to the `char::is_whitespace` set; hard-break reason depends on `BrStyle`; a backslash neighbor escapes the opener |
 | 6     | 4        | Findings in part 4, all applied                                                                                                                                                                                                                                         |
 | 7     | 2        | Step 5 now says it needs the emitted Markdown around the element, unlike the emphasis section; step 3's reason corrected (an unmatched `~~` run, not a balanced strikethrough, blocks the closing `~`)                                                                  |
+| 8 | 3 | Clarified which emitted characters determine subscript validity, specified where edge whitespace stays on fallback, and added three boundary examples. |
 
 4. Round 6 review
 -----------------
@@ -219,7 +219,7 @@ Output:
 >
 > Findings: 4
 
-5. Last review (round 7)
+5. Review (round 7)
 ------------------------
 
 Prompting Claude Sonnet 5.5 (`claude-sonnet-5-5`), with a fresh read-only
@@ -364,3 +364,165 @@ Output:
 >   * Faithful adjacent subscripts match the emphasis section's run rule.
 >   * The lower-bound clamping in `truncate` keeps a failed closer before an
 >     enclosing opener from blocking a later subscript.
+
+## 6. Last review (round 8) — Dustin Johnson
+
+**Tool:** VS Code AI chat, Agent mode
+**Model and effort:** Exact model and effort setting not recorded.
+
+### Prompt used
+
+```text
+Help me develop a small, evidence-backed revision to the Subscript section
+of translation_approach.md for our ECE 4793 draft. My contribution is to
+verify and clarify how whitespace and neighboring characters affect the
+decision to emit Markdown subscript or fall back to HTML.
+
+Read the current Subscript section, especially steps 4–6 and the Pure-mode
+paragraph. Use the rest of the document only to understand its terminology
+and conventions. Check Cargo.lock for the pinned pulldown-cmark version and
+use that version for parser verification. Use ENABLE_SUBSCRIPT and state
+which other parser options you enable. Work in my local clone. Do not
+implement the feature, rewrite the whole section, rename any files, or
+commit or push changes.
+
+1. Establish the rule before proposing edits.
+
+   Explain in plain language when a single opening or closing tilde is
+   recognized as a subscript delimiter. Distinguish characters in the
+   original HTML from characters in the Markdown actually emitted. Explain
+   the order of operations: trim the subscript content, move any edge
+   whitespace as specified, then determine what touches each delimiter.
+   Identify any point where the current wording allows two reasonable
+   interpretations.
+
+2. Verify concrete examples with the pinned Markdown parser.
+
+   Start with these inputs:
+
+   - H<sub>2</sub>O
+   - H<sub> 2 </sub>O
+   - H<sub> 2</sub>O
+   - H<sub>2 </sub>O
+   - x (<sub>i</sub>) y
+   - H<sub>2</sub><span>O</span>
+
+   For each input, derive the candidate Markdown from the current spec.
+   Where the spec calls for HTML fallback, also try the Markdown form
+   that would have been emitted without the fallback. Run the candidate
+   Markdown through pulldown-cmark and record whether it produces a
+   subscript and what visible spacing it preserves.
+
+   For the span example, distinguish a mode that passes through the
+   span's text from one that emits the span as HTML. Do not assume the
+   emitted neighbor is the same in both modes.
+
+   If htmd does not implement the proposed rule on this branch, test
+   candidate Markdown directly with a temporary parser harness. Do not
+   report a parser result as an htmd conversion result. Show what you
+   actually ran. If you cannot execute a case, label it as an expectation.
+
+3. Propose the smallest useful specification change.
+
+   Give me exact replacement text for any sentence you recommend
+   changing, and suggest up to three example rows that add coverage beyond
+   the existing table. Use the document's current style, including its
+   visible-space notation where useful. State the expected Faithful output
+   and explain any different Pure-mode behavior.
+
+   Write the rule so someone implementing it can tell which characters to
+   inspect and when to fall back. Keep the rule independent of a particular
+   traversal or buffering strategy. Preserve existing decisions about
+   attributes, nesting, and escaping unless a verified case directly
+   contradicts one. If the rule is already clear and correct, say so and
+   propose only examples that demonstrate something the table does not
+   already cover.
+
+4. Give me a review record.
+
+   Return:
+   - The exact commands run and their results.
+   - A table of inputs, candidate Markdown, and observed parser behavior.
+   - A numbered list of actionable spec findings, with the count.
+   - The exact wording and example rows you recommend adding.
+   - A one-sentence summary of the proposed change for our review-round
+     table. Describe it as proposed until I apply it.
+
+Do not edit the shared files yet. I want to review the evidence and decide
+which changes to make.
+```
+
+### Review output
+
+#### 1. Rule established
+
+With `ENABLE_SUBSCRIPT` enabled, a single `~` opens a subscript when it is followed by a non-whitespace character and preceded by the start of the line, whitespace, or punctuation. It closes one when preceded by a non-whitespace character and followed by whitespace, punctuation, or the end of the line. A tilde inside the original HTML does not determine this: the parser checks characters in the Markdown candidate, including the translated subscript content and the output of neighboring elements.
+
+The intended order is: trim the translated content’s edge whitespace, move that whitespace outside the would-be `~…~`, then test the delimiter boundaries in the prospective Markdown output for the current mode. For example, `H<sub> 2 </sub>O` becomes `H ~2~ O`, so both delimiters have whitespace neighbors and the parser recognizes the subscript.
+
+There are two ambiguities worth resolving in the current wording:
+
+- Step 5 says to inspect “emitted Markdown,” but does not explicitly say this means the **prospective, mode-specific** output after step 4—not the neighboring characters in the input HTML.
+- If the candidate fails and Faithful mode falls back to HTML, steps 4–5 do not say whether the fallback retains the original edge whitespace inside `<sub>` or keeps it moved outside. Both readings are plausible; the parser tests below show their different output.
+
+The single-tilde flanking rules themselves are already stated clearly. Nothing in these tests requires changing the existing choices about attributes, nesting, or escaping.
+
+#### 2. Parser verification
+
+`Cargo.lock` pins `pulldown-cmark` **0.13.4**; `cargo tree -i pulldown-cmark` also reported `pulldown-cmark v0.13.4`. The temporary harness enabled **`ENABLE_SUBSCRIPT | ENABLE_STRIKETHROUGH`**; all other parser options were disabled. It detected `Event::Start(Tag::Subscript)` and rendered the events to HTML. These are parser results—not htmd conversion results. A raw-HTML fallback can render a `<sub>` element even when there is no Markdown `Tag::Subscript` event.
+
+In the table, `␣` denotes a literal space; spaces passed to the harness were ordinary U+0020 spaces.
+
+| Input / case | Candidate Markdown tested | Parser observation |
+| --- | --- | --- |
+| `H<sub>2</sub>O`, Faithful fallback | `H<sub>2</sub>O` | No Markdown subscript event; raw HTML renders `<sub>2</sub>`. |
+| Same, hypothetical Markdown form | `H~2~O` | No subscript event; tildes remain literal. `H` blocks opening and `O` blocks closing. |
+| `H<sub> 2 </sub>O` | `H␣~2~␣O` | Subscript event; rendered output is `H␣<sub>2</sub>␣O`. The moved spaces remain outside the subscript. |
+| `H<sub> 2</sub>O`, fallback retaining original whitespace | `H<sub>␣2</sub>O` | No Markdown subscript event; raw HTML retains the space inside `<sub>`. |
+| Same, fallback after moving whitespace | `H␣<sub>2</sub>O` | No Markdown subscript event; the space is outside `<sub>`. |
+| Same, hypothetical Markdown form | `H␣~2~O` | No subscript event; `O` blocks closing. |
+| `H<sub>2 </sub>O`, fallback retaining original whitespace | `H<sub>2␣</sub>O` | No Markdown subscript event; raw HTML retains the space inside `<sub>`. |
+| Same, fallback after moving whitespace | `H<sub>2</sub>␣O` | No Markdown subscript event; the space is outside `<sub>`. |
+| Same, hypothetical Markdown form | `H~2~␣O` | No subscript event; `H` blocks opening. |
+| `x (<sub>i</sub>) y` | `x (~i~) y` | Subscript event; rendered output is `x␣(<sub>i</sub>)␣y`. Parentheses are acceptable punctuation neighbors. |
+| `H<sub>2</sub><span>O</span>`, Faithful | `H<sub>2</sub><span>O</span>` | No Markdown subscript event; raw `<sub>` and `<span>` HTML render. `H` blocks opening. |
+| Same, Faithful hypothetical Markdown form | `H~2~<span>O</span>` | No subscript event; `H` still blocks opening. The emitted character after the closing tilde would be `<`. |
+| Same, Pure | `H2O` | No Markdown subscript event; the subscript is emitted as plain content and the span’s text passes through. |
+| Same, Pure hypothetical Markdown form | `H~2~O` | No subscript event; the emitted neighbor is `O` (and `H` also blocks opening). |
+
+For the span case, the difference between modes is real even though `H` already makes this particular subscript fail: Faithful emits `<span>O</span>`, while Pure emits the text `O`. A more discriminating candidate, `(~i~<span>O</span>)`, produced a Markdown subscript event; its Pure text-neighbor counterpart `(~i~O)` did not.
+
+**What I ran:** `cargo tree -i pulldown-cmark` reported version 0.13.4. I created and removed a temporary crate whose manifest pinned `pulldown-cmark = "=0.13.4"`.
+
+*[Dustin’s note: The command list was blank in the copied response, so the exact harness command is not recorded.]*
+
+The harness used `Parser::new_ext(markdown, Options::ENABLE_SUBSCRIPT | Options::ENABLE_STRIKETHROUGH)`, detected `Event::Start(Tag::Subscript)`, and called `pulldown_cmark::html::push_html`. It tested the candidates listed above. The additional-candidate run exited 0 with a harmless unused-import warning.
+
+#### 3. Proposed specification change
+
+I recommend replacing steps 4–5 with the following. This makes the characters under inspection, fallback behavior, and mode difference explicit while leaving the other existing decisions intact:
+
+> 4. For a Markdown candidate, trim leading and trailing whitespace from the translated content and place those characters immediately outside the would-be `~content~` pair.
+> 5. Test that candidate against the complete prospective Markdown output for the current mode. Inspect the emitted characters immediately adjacent to each tilde, including the first and last emitted characters of the content and output from neighboring elements; do not use adjacent characters from the input HTML. Apply the single-tilde flanking rules above, and retain the fallback when an unescaped `~` or `\` is immediately outside the pair. If either delimiter is invalid, Faithful mode serializes the original `<sub>` element as HTML, preserving its original edge whitespace; Pure mode emits the relocated edge whitespace and the trimmed content without tildes. A letter immediately before the opening tilde or after the closing tilde blocks that delimiter, and a neighboring tilde merges with it: `~a~~b~` reads as text. A neighbor can come from any element, including a `<span>` whose emitted Markdown differs by mode.
+
+Three useful additions to the existing table:
+
+| Description | HTML in | Faithful expected |
+| --- | --- | --- |
+| Leading edge whitespace with an intraword neighbor | `H<sub>␣2</sub>O` | `H<sub>␣2</sub>O` |
+| Trailing edge whitespace with an intraword neighbor | `H<sub>2␣</sub>O` | `H<sub>2␣</sub>O` |
+| Mode-dependent span neighbor | `(<sub>i</sub><span>O</span>)` | `(~i~<span>O</span>)` |
+
+For the first two rows, Pure would emit `H␣2O` and `H2␣O`, respectively: no HTML and no subscript markup. For the span row, Pure would emit `(iO)`; Faithful’s HTML span leaves `<` next to the closing tilde, while Pure’s text neighbor `O` blocks it.
+
+#### 4. Review record
+
+**Actionable findings: 3**
+
+1. Clarify that boundary checks use the complete prospective Markdown output for the active mode, after edge-whitespace relocation—not input-HTML neighbors.
+2. Specify what happens to edge whitespace when step 5 falls back: retain it inside the original Faithful HTML element; in Pure, emit it outside the plain content.
+3. Add asymmetric edge-whitespace and mode-dependent span examples; the current table does not cover those cases.
+
+**Commands and results:** `cargo tree -i pulldown-cmark` → `pulldown-cmark v0.13.4`; the temporary pinned-parser harness → exit 0, with the observations tabulated here; `git status --short` → `M subscript_submission.md`. That submission-file change was already present and left untouched. I did not edit `translation_approach.md` or any shared files.
+
+**Review-round summary (proposed):** Clarifies mode-specific delimiter checks and edge-whitespace handling on fallback, and adds asymmetric-whitespace and mode-dependent-span examples.

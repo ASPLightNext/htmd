@@ -768,6 +768,9 @@ or more is text.
 | Literal tilde               | `a~b`                      | `a\~b`                     |
 | Tilde inside subscript      | `<sub>a~b</sub>`           | `~a\~b~`                   |
 | Interior whitespace         | `x<sub>␣a␣</sub>y`         | `x␣~a~␣y`                  |
+| Leading space; closing tilde blocked | `H<sub>␣2</sub>O` | `H<sub>␣2</sub>O` |
+| Trailing space; opening tilde blocked | `H<sub>2␣</sub>O` | `H<sub>2␣</sub>O` |
+| Span changes the emitted neighbor by mode | `(<sub>i</sub><span>O</span>)` | `(~i~<span>O</span>)` |
 | Whitespace-only subscript   | `a<sub>␣</sub>b`           | `a<sub>␣</sub>b`           |
 | Empty subscript             | `a<sub></sub>b`            | `a<sub></sub>b`            |
 | Subscript with attributes   | `<sub class="x">a</sub>`   | `<sub class="x">a</sub>`   |
@@ -786,15 +789,18 @@ Approach:
    HTML: `~~a~~` reads as strikethrough, and an unmatched `~~` run inside the
    content, such as one left by another handler, stops the closing `~` from
    matching.
-4. Move leading and trailing whitespace outside the content.
-5. If the character of the emitted Markdown before the opening `~`, or after the
-   closing `~`, is neither whitespace nor punctuation, is an unescaped `~`, or
-   is an unescaped `\`, serialize the element as HTML. A letter there stops the
-   `~` from opening or closing, and a neighboring `~` merges with it: `~a~~b~`
-   reads as text. These neighbors may come from any node, including content
-   written by a pass-through `<span>`. Unlike the emphasis section, which
-   tests only the content's own first and last characters, this step needs the
-   emitted Markdown around the element.
+4. To form a Markdown candidate, trim leading and trailing whitespace from
+   the translated content and place it outside the proposed `~content~` pair.
+5. Apply the single-tilde rules above to the candidate after step 4, using
+   the characters that would be emitted in the current mode. Check the
+   characters immediately inside and outside both tildes. The outside
+   characters can come from neighboring elements, including a `<span>` that
+   emits HTML in Faithful mode but passes through its text in Pure mode.
+   Reject the candidate if either delimiter cannot open or close, or if
+   either outside neighbor is an unescaped `~` or `\`. In Faithful mode,
+   serialize the `<sub>` element as HTML without moving its edge whitespace
+   outside the element. In Pure mode, emit the trimmed content with its
+   leading and trailing whitespace, without tildes.
 6. Otherwise, surround the content with `~`.
 
 Every `~` in a run of one or two in a text node outside a code span, code block,
