@@ -58,6 +58,17 @@ that you can compile and run the project in the current git repo.` produced:
 >
 > I also didn't run the benchmarks (`cargo bench`).
 
+#### Dustin Johnson
+
+> Verified successfully on Windows:
+>
+> - `cargo build` — passed
+> - `cargo clippy -- --deny warnings` — passed
+> - `cargo test` — 267 passed, 1 ignored
+> - `cargo run --example simple` — ran successfully
+>
+> I installed the Rust stable toolchain and MSVC C++ Build Tools needed to compile. The repository working tree remains unchanged.
+
 Prompt used to write the spec section
 -------------------------------------
 
