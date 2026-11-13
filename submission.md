@@ -119,6 +119,7 @@ Output:
 | 5     | 5        | `\~~~` leaves a live `~~` that blocks the closing `~`; Pure combines adjacent subscripts (`~ab~`); "Unicode whitespace" renamed to the `char::is_whitespace` set; hard-break reason depends on `BrStyle`; a backslash neighbor escapes the opener |
 | 6     | 4        | Findings in part 4, all applied                                                                                                                                                                                                                                         |
 | 7     | 2        | Step 5 now says it needs the emitted Markdown around the element, unlike the emphasis section; step 3's reason corrected (an unmatched `~~` run, not a balanced strikethrough, blocks the closing `~`)                                                                  |
+
 | 8 | 3 | Clarified which emitted characters determine subscript validity, specified where edge whitespace stays on fallback, and added three boundary examples. |
 
 4. Round 6 review
@@ -462,7 +463,7 @@ The intended order is: trim the translated content’s edge whitespace, move tha
 
 There are two ambiguities worth resolving in the current wording:
 
-- Step 5 says to inspect “emitted Markdown,” but does not explicitly say this means the **prospective, mode-specific** output after step 4—not the neighboring characters in the input HTML.
+- Step 5 says to inspect “emitted Markdown,” but does not explicitly say this means the *prospective, mode-specific* output after step 4—not the neighboring characters in the input HTML.
 - If the candidate fails and Faithful mode falls back to HTML, steps 4–5 do not say whether the fallback retains the original edge whitespace inside `<sub>` or keeps it moved outside. Both readings are plausible; the parser tests below show their different output.
 
 The single-tilde flanking rules themselves are already stated clearly. Nothing in these tests requires changing the existing choices about attributes, nesting, or escaping.
@@ -526,3 +527,107 @@ For the first two rows, Pure would emit `H␣2O` and `H2␣O`, respectively: no 
 **Commands and results:** `cargo tree -i pulldown-cmark` → `pulldown-cmark v0.13.4`; the temporary pinned-parser harness → exit 0, with the observations tabulated here; `git status --short` → `M subscript_submission.md`. That submission-file change was already present and left untouched. I did not edit `translation_approach.md` or any shared files.
 
 **Review-round summary (proposed):** Clarifies mode-specific delimiter checks and edge-whitespace handling on fallback, and adds asymmetric-whitespace and mode-dependent-span examples.
+
+## Final submission
+
+### Dustin Johnson
+
+GitHub userid: `drj228`
+
+#### Contributions
+
+Finalized the Subscript specification’s block fallback, adjacency, and tilde-escaping rules through two LLM review rounds and committed the changes in `a5326db`.
+
+#### Specification review rounds
+
+These rounds cover only the final submission; draft review rounds are recorded above.
+
+| Round | Necessary findings | Optional/trivial findings | Main changes made |
+| --- | ---: | ---: | --- |
+| 1 | 3 | 6 | Added block-descendant fallback and its precedence over Pure-mode combining, defined adjacency independently of the existing combining implementation, and clarified escaping complete tilde runs. |
+| 2 | 0 | 4 | Confirmed that all three necessary findings were resolved; only optional wording suggestions remained, and no further changes were made. |
+
+#### Last specification review
+
+Model: Claude Opus 5.5, Medium effort.
+
+Tool: Claude browser chat, using an attached copy of the updated specification.
+
+The prompt below requested workspace access, but Claude could not access my computer and explicitly reported reviewing the attachment instead. Its parser tests used handwritten Markdown candidates, not htmd conversion output.
+
+Prompt:
+
+```text
+Read the saved translation_approach.md directly from the current VS Code workspace, including its uncommitted changes. Do not clone the repository or use an earlier attachment.
+
+Read AGENTS.md, then review only the Subscript section and its related shared-context bullet.
+
+Check whether these findings are resolved:
+1. Block descendants use the Faithful HTML-block fallback. Pure mode translates children in the incoming context, with this rule taking precedence over combining.
+2. Adjacency is defined independently of can_combine and handles differing attributes and non-text children deterministically.
+3. Every tilde in a run of three or more is escaped at text-node starts and inside subscript content.
+
+Check for new substantive contradictions between the rules and examples. Verify uncertain parser behavior against pulldown-cmark 0.13.4 with ENABLE_SUBSCRIPT | ENABLE_STRIKETHROUGH. For block fallback cases, distinguish rendered HTML from its parsed DOM.
+
+Do not edit any files, implement anything, commit, or push.
+
+Separate necessary corrections from optional or trivial findings. Give a concrete counterexample and the smallest appropriate fix for each necessary correction. Do not repeat resolved findings without new evidence.
+
+State the actual file path inspected and exactly what you executed versus inspected. Finish with finding counts and a one-sentence review-table summary. If only trivial suggestions remain, say so.
+```
+
+Claude’s response:
+
+> The heading case keeps its structure. The one failing case (a subscript holding a `<p>` inside a paragraph) can’t come from real HTML, because the HTML parser closes the `<p>` first. I’ll clean up.
+>
+> I found **no necessary corrections** in the file you attached: all three findings are resolved and your rewording introduces no contradictions. Only four optional or trivial suggestions remain.
+>
+> ### Which file I reviewed
+>
+> I couldn’t read your VS Code workspace: no device-bridge tools are connected, so your computer isn’t reachable from here. I reviewed `/mnt/user-data/uploads/01b51335-attachment.txt`, the file you attached with this message, not a clone or an earlier attachment. It has 838 CRLF lines. I’m assuming it is your saved `translation_approach.md`, but I can’t confirm that.
+>
+> ### Inspected versus executed
+>
+> - **Inspected:**
+>   - `AGENTS.md`, from the copy in my workspace taken at `a31bed2`.
+>   - The type 7 bullet in “Translating HTML nodes”, the whole Subscript section, and the emphasis run rule.
+>   - A diff of the attachment against the file I sent you last. It differs only in your rewording of the shared bullet, the two row names, step 1, the tilde and adjacency sentences, and the Pure paragraph.
+> - **Executed:**
+>   - A temporary harness on pulldown-cmark 0.13.4 (tag `v0.13.4`, `38e4d08`) with `ENABLE_SUBSCRIPT | ENABLE_STRIKETHROUGH` and no other options. It ran 10 handwritten Markdown inputs.
+>   - Headless Chrome `--dump-dom` on 5 of the rendered results, to see the parsed DOM.
+>   - No htmd conversions; htmd has no `<sub>` handler yet.
+>   - All temporary files deleted.
+>
+> ### The three findings
+>
+> **1. Block descendants: resolved.**
+>
+> - **Faithful, block context:** step 1 now applies the HTML-block form before the other checks, and attributes no longer bypass it. The row’s `<sub>⏎<p>a</p><p>b</p></sub>` renders as itself, and its DOM matches the source except for a leading `⏎` text node.
+> - **Faithful, inline context (new behavior):** this case now reaches the `~…~` steps. In a heading, `# ~<p>a</p>~` renders `<h1><sub><p>a</p></sub></h1>`, and the DOM keeps that structure. So does `# x ~<p>a</p><p>b</p>~ y`.
+> - **Paragraphs:** inside a paragraph the same Markdown would break, but HTML parsing never produces `<p>…<sub><p>`. The case reachable through an inline ancestor such as `<em>` breaks with or without a subscript, as I reported last time.
+> - **Pure:** the block rule takes precedence over combining. `a⏎⏎b` gives two paragraphs, and `a⏎⏎~b~` gives `<p>a</p><p><sub>b</sub></p>`.
+>
+> **2. Adjacency: resolved.** Adjacency no longer depends on `can_combine`, and the text explicitly covers differing attributes and children. Faithful mode serializes every member of a run, and Pure mode combines the eligible ones.
+>
+> **3. Tilde runs: resolved.** Your shorter wording keeps the rule. The parser confirms it: `*a*\~~~b c~~~*d*\~~~e` produces a strikethrough, while `*a*\~\~\~b c~~~*d*\~\~\~e` reads as plain text.
+>
+> ### Optional or trivial findings
+>
+> 1. **“This choice” now points at the wrong sentence.** In the type 7 bullet, your new sentence sits between “…the resulting context is inline.” and “This choice is a tradeoff”. “This choice” now seems to mean the subscript fallback rather than writing type 7 HTML as raw inlines. Moving the new sentence to the end of the bullet fixes it.
+> 2. **“Immediately adjacent `<sub>` siblings” can be read two ways.** It could be taken to mean neighboring elements, ignoring whitespace text between them. For `<sub>a</sub> <sub>b</sub>`, that reading gives a different but valid result: Pure would write `~a b~` instead of `~a~ ~b~`, and both parse. Adding “with no node, not even whitespace text, between them” removes the doubt.
+> 3. **“Apply the existing blank-line encoding rules” is vague.** Naming them would help: the type 6 `&#13;`/`&#10;` encoding of blank lines, and the blank line before and after an HTML block.
+> 4. **“Every `~` is escaped at a text-node start” reads loosely.** It is clearer as “every `~` of a run of three or more that begins a text node, and of any such run inside subscript content”.
+>
+> ### Result
+>
+> - **Necessary corrections:** 0
+> - **Optional or trivial:** 4
+> - **Review-table summary:** All three findings are resolved and the rewording introduces no contradictions, so only trivial wording suggestions remain.
+
+#### Implementation review rounds
+
+Implementation and implementation reviews have not yet been completed.
+
+#### Last implementation review
+
+Not yet performed.
