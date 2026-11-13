@@ -284,8 +284,10 @@ fn faithful_mode_keeps_adjacent_untranslated_elements_apart() {
 #[test]
 fn pure_mode_merges_adjacent_inline_elements() {
     assert_eq!("*ab*", convert_pure("<p><em>a</em><em>b</em></p>").unwrap());
+    // Adjacent subscripts combine into one; see the "Subscript" section of
+    // `translation_approach.md`.
     assert_eq!(
-        "ab",
+        "~ab~",
         convert_pure("<p><sub>a</sub><sub>b</sub></p>").unwrap()
     );
 }

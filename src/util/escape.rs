@@ -194,9 +194,39 @@ pub(crate) fn escape_image_description(alt: &str) -> String {
     let escaped = escape_inline_string(alt, |ch| {
         matches!(ch, '\\' | '&' | '*' | '_' | '`' | '[' | ']' | '$')
     });
+    let escaped = escape_short_tilde_runs(escaped);
     // `should_escape_html_like_sequence` reads a CDATA section in the spelling
     // the backslash pass leaves behind, so that pass comes first.
     escape_html(Cow::Owned(escaped)).into_owned()
+}
+
+/// Escapes each `~` of a run of one or two, which could delimit a subscript or a
+/// strikethrough; a longer run is text. Runs here are those of the input, which
+/// the backslash pass before this never splits. See the "Subscript" section of
+/// `translation_approach.md`.
+fn escape_short_tilde_runs(text: String) -> String {
+    if !text.contains('~') {
+        return text;
+    }
+    let mut result = String::with_capacity(text.len() + 4);
+    let mut chars = text.chars().peekable();
+    while let Some(ch) = chars.next() {
+        if ch != '~' {
+            result.push(ch);
+            continue;
+        }
+        let mut run_len = 1;
+        while chars.next_if_eq(&'~').is_some() {
+            run_len += 1;
+        }
+        for _ in 0..run_len {
+            if run_len <= 2 {
+                result.push('\\');
+            }
+            result.push('~');
+        }
+    }
+    result
 }
 
 /// Whether `text` opens an

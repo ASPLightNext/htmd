@@ -169,6 +169,7 @@ impl HtmlToMarkdown {
     /// simply `use htmd::Node;` to access this type.
     pub fn tree_to_markdown(&self, tree: &Rc<Node>) -> String {
         self.handlers.emit_doc_enter();
+        let subscripts = element_handler::sub::ConversionScope::enter();
         let mut content = String::new();
 
         walk_node(
@@ -182,6 +183,12 @@ impl HtmlToMarkdown {
                 literal: is_inside_pre(tree),
             },
         );
+
+        // Subscript delimiters depend on the characters emitted around them,
+        // which only the assembled document holds; see the "Subscript" section
+        // of `translation_approach.md`.
+        element_handler::sub::resolve(&mut content);
+        drop(subscripts);
 
         // Trim the body's trailing newlines before the appends below, whose
         // content opens with a blank line separating it from the body.

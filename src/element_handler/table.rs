@@ -1,6 +1,7 @@
 use crate::Context;
 use crate::element_handler::element_util::serialize_element_result;
 use crate::element_handler::element_util::serialize_if_extra_attrs_or_inline;
+use crate::element_handler::sub::resolved_char_count;
 use crate::element_handler::{Element, HandlerResult, Handlers};
 use crate::options::TranslationMode;
 use crate::util::{
@@ -413,7 +414,7 @@ fn format_row_padded(row: &[String], num_columns: usize, col_widths: &[usize]) -
     let mut line = String::from("|");
     for (i, col_width) in col_widths.iter().enumerate().take(num_columns) {
         let cell = row.get(i).map(String::as_str).unwrap_or_default();
-        let pad = col_width.saturating_sub(cell.chars().count());
+        let pad = col_width.saturating_sub(resolved_char_count(cell));
         line.push_str(&concat_strings!(" ", cell, " ".repeat(pad), " |"));
     }
     line.push('\n');
@@ -440,11 +441,11 @@ fn compute_column_widths(
     // row aligned with the rows around it.
     let mut widths = vec![1; num_columns];
     for (i, header) in headers.iter().enumerate() {
-        widths[i] = widths[i].max(header.chars().count());
+        widths[i] = widths[i].max(resolved_char_count(header));
     }
     for row in rows {
         for (i, cell) in row.iter().enumerate().take(num_columns) {
-            let len = cell.chars().count();
+            let len = resolved_char_count(cell);
             if len > widths[i] {
                 widths[i] = len;
             }

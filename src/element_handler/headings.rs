@@ -1,6 +1,7 @@
 use crate::{
     Context, Element,
     element_handler::element_util::serialize_if_extra_attrs_or_inline,
+    element_handler::sub::resolved_char_count,
     element_handler::{HandlerResult, Handlers},
     html_block::starts_html_block,
     options::HeadingStyle,
@@ -41,7 +42,7 @@ pub(super) fn headings_handler(
         result.push_str(content);
         result.push('\n');
         let ch = if level == 1 { "=" } else { "-" };
-        result.push_str(&ch.repeat(content.chars().count()));
+        result.push_str(&ch.repeat(resolved_char_count(content)));
         result.push_str("\n\n");
     } else {
         result.push_str(&"#".repeat(level as usize));

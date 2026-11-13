@@ -15,6 +15,7 @@ mod list;
 mod p;
 mod pre;
 mod span;
+pub(crate) mod sub;
 mod table;
 mod table_section;
 mod td_th;
@@ -47,6 +48,7 @@ use p::p_handler;
 use pre::pre_handler;
 use span::span_handler;
 use std::{collections::HashMap, rc::Rc};
+use sub::sub_handler;
 use table::table_handler;
 use table_section::table_section_handler;
 use td_th::td_th_handler;
@@ -382,6 +384,8 @@ impl ElementHandlers {
         handlers.add_handler(vec!["html"], html_handler);
 
         handlers.add_handler(vec!["span"], span_handler);
+
+        handlers.add_handler(vec!["sub"], sub_handler);
 
         let unhandled_block_elements = crate::util::node::BLOCK_ELEMENTS
             .iter()

@@ -156,6 +156,12 @@ fn serialize_block_element(element: &Element) -> io::Result<String> {
     Ok(frame_as_block(&html))
 }
 
+/// The subtree of `element` as written, for an HTML block whose content the
+/// CommonMark parser leaves alone.
+pub(crate) fn serialize_subtree_html(element: &Element) -> String {
+    serialize_subtree(element).unwrap_or_else(|error| error.to_string())
+}
+
 fn serialize_subtree(element: &Element) -> io::Result<String> {
     let mut bytes = Vec::new();
     let handle = SerializableHandle::from(element.node.clone());
@@ -190,7 +196,7 @@ fn encode_open_tag_specials(open_tag: &str) -> String {
 
 // A blank line terminates a CommonMark HTML block. Encode every line ending
 // after the first so serialized block content remains in one HTML block.
-fn escape_html_block_blank_lines(html: String) -> String {
+pub(crate) fn escape_html_block_blank_lines(html: String) -> String {
     if !has_line_ending(&html) {
         return html;
     }
