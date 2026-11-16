@@ -64,7 +64,7 @@ can compile and run the project in the current git repo.` produced:
 >
 > - `cargo build` — passed
 > - `cargo clippy -- --deny warnings` — passed
-> - `cargo test` — 286 passed, 1 ignored
+> - `cargo test` — 267 passed, 1 ignored
 > - `cargo run --example simple` — ran successfully
 >
 > I installed the Rust stable toolchain and MSVC C++ Build Tools needed to compile. The repository working tree remains unchanged.
@@ -617,110 +617,36 @@ Windows verification after the final correction:
 | `cargo fmt --check` | Passed |
 | `cargo build --locked` | Passed |
 | `cargo clippy --locked -- --deny warnings` | Passed |
-| `cargo test --locked` | Passed: 38 unit tests, 244 integration tests, and 4 documentation tests; 1 ignored |
+| `cargo test --locked` | Passed: 39 unit tests, 249 integration tests, and 4 documentation tests; 1 ignored |
 
-The integration tests include 17 Subscript tests. These Windows checks used the normal repository dependencies and lockfile, rather than Claude’s substitute offline dependency setup.
+The integration tests include 22 Subscript tests. These Windows checks used the normal repository dependencies and lockfile, rather than Claude’s substitute offline dependency setup.
 
 #### Last implementation review
 
-Model: Claude Opus 5.5, Medium effort.
+Model: Claude Opus 5.5, Medium effort. Tool: Claude browser chat.
 
-Tool: Claude browser chat.
+Reviewed version: the original repository archive with three patches applied in
+order (the revised implementation with the marker-width and caret fixes, the
+NBSP fix, and the mixed-whitespace fix), later committed as `49f3b7d`.
 
-Reviewed version: the original repository archive with the revised implementation patch, the NBSP fix, and the mixed-whitespace fix applied in order. This implementation was subsequently committed as `49f3b7d`.
+The prompt asked Claude to confirm that exact version, check that a Faithful
+fallback keeps only the single shared ASCII space outside the element for
+leading and trailing runs with one or several NBSPs, look for new correctness
+problems, and report necessary and optional findings separately, without
+editing files.
 
-Prompt:
+Claude applied the three patches to a fresh extraction, converted 15 HTML inputs
+through htmd, and ran `cargo build`, `cargo clippy -- --deny warnings`,
+`cargo fmt --check`, and `cargo test --no-fail-fast` (292 passed, 1 ignored) in
+an offline setup without `--locked`; the Windows run above verifies the real
+build.
 
-```text
-Review the Subscript implementation with all three patches applied in order:
-1. Revised htmd-subscript.patch containing the marker-width and caret fixes.
-2. htmd-subscript-nbsp-fix.patch.
-3. htmd-subscript-mixed-ws-fix.patch.
+Result: 0 necessary corrections and 0 new optional ones. Three optional
+suggestions from round 2 still stood and were left unchanged:
 
-Confirm this exact version before reviewing. Read AGENTS.md.
-
-Review only the Subscript implementation and its necessary shared-code changes against the finalized specification.
-
-Check whether the mixed-whitespace finding is resolved: a Faithful fallback must retain only the single shared ASCII space outside the element and restore the rest of the edge run inside it. Check both leading and trailing runs containing one or multiple NBSPs, plus the existing ASCII-only and NBSP-only cases.
-
-Check the fix for new correctness problems. Do not repeat resolved findings without concrete counterevidence. Keep previously reported optional suggestions separate unless new evidence demonstrates a substantive failure.
-
-Normal Windows checks passed on this version:
-cargo fmt --check
-cargo build --locked
-cargo clippy --locked -- --deny warnings
-cargo test --locked
-
-Results: 39 unit tests passed, 1 ignored; 249 integration tests passed, including 22 Subscript tests; 4 documentation tests passed. These are my results, not commands you executed.
-
-Do not edit files, commit, or push. Report necessary corrections separately from optional or trivial findings. For each necessary correction, give a concrete input and the smallest appropriate fix.
-
-State exactly what you inspected and executed, including dependency limitations. Finish with finding counts and a one-sentence review-table summary. If only optional or trivial suggestions remain, say so.
-```
-
-Claude’s response:
-
-> I’ll confirm the attached third patch matches the one I delivered, apply all three in order to a fresh extraction, and check `AGENTS.md`.
->
-> The mixed-whitespace finding is resolved, and I found **no new correctness problems**. Only the three optional suggestions from round 2 remain.
->
-> ### Which version I reviewed
->
-> - **The patch you attached** is byte-identical to the `htmd-subscript-mixed-ws-fix.patch` I delivered (SHA-256 `7fbedea5…`).
-> - **The full chain:** I applied it to a fresh extraction of the archive after `htmd-subscript.patch` (`856c5bc3…`) and `htmd-subscript-nbsp-fix.patch` (`0f3b203b…`). All three applied cleanly with `patch -p1`, and the result matches the tree I fixed last round.
->
-> ### What I inspected and executed
->
-> - **Inspected:**
->   - `AGENTS.md`.
->   - The new fallback code in `resolve` and the sharing conditions in `sub.rs`.
->   - The walker’s space handling (`compress_whitespace`, `append_normalized_content` and `walk_text`), to check that the shared space is always the first character of a leading run or the last of a trailing one.
->   - The changed tests.
-> - **Executed**, in my existing offline scratch setup with a fresh target directory:
->   - I converted 15 HTML inputs through htmd with a probe program.
->   - The focused tests (`fallback_shares`, `edge_whitespace`) pass.
->   - `cargo build`, `cargo clippy -- --deny warnings` and `cargo fmt --check` are clean.
->   - `cargo test --no-fail-fast`: 292 passed, 1 ignored.
-> - **Dependency limitation:** crates.io isn’t reachable here, so the dependencies are GitHub checkouts at the locked versions. The setup drops `criterion` and re-resolves the lock offline, so nothing ran with `--locked`. Your Windows run is the one that verifies the real build.
->
-> ### The mixed-whitespace finding is resolved
->
-> Faithful fallbacks now keep only the shared ASCII space outside the element and put the rest of the run back inside:
->
-> | Input | Output |
-> | --- | --- |
-> | `a <sub> &nbsp;b</sub>c` | `a <sub> \u{a0}b</sub>c` |
-> | `H<sub>b&nbsp; </sub> c` | `H<sub>b\u{a0} </sub> c` |
-> | `a <sub> &nbsp;&nbsp;&nbsp;b</sub>c` | `a <sub> \u{a0}\u{a0}\u{a0}b</sub>c` |
-> | `H<sub>b&nbsp;&nbsp;&nbsp; </sub> c` | `H<sub>b\u{a0}\u{a0}\u{a0} </sub> c` |
-> | `a <sub> &nbsp; b</sub>c` | `a <sub> \u{a0} b</sub>c` |
-> | `a <sub>&nbsp; b</sub>c` | `a <sub>\u{a0} b</sub>c` |
-> | `H<sub>b &nbsp;</sub> c` | `H<sub>b \u{a0}</sub> c` |
->
-> In the last two rows the run doesn’t start (or end) with a plain space, so nothing is shared and the whole run goes inside.
->
-> Earlier cases are unchanged:
->
-> - **Plain spaces:** `a <sub> b</sub>c` and `a<sub>b </sub> c`.
-> - **A non-breaking space beside the subscript:** `a\u{a0}<sub> b</sub>c` and `H<sub>b </sub>\u{a0}c`.
->
-> ### Checked for new problems
->
-> - **Slicing:** `lead[1..]` and `trail[..len-1]` are byte-safe, because sharing requires that character to be an ASCII space. For a run that is one shared space, the removed part is empty, so ASCII behavior is unchanged.
-> - **Space flagged as shared but never merged:** a shared space that the walker didn’t actually merge can only happen at the start of a paragraph, where the previous text’s space was trimmed (`<p> <sub> &nbsp;b</sub>c</p>` gives ` <sub> \u{a0}b</sub>c`). That one outside space matches the existing convention (emphasis does the same), and CommonMark strips it, so the rendered output is unaffected.
-> - **Accepted candidates are unaffected:** a subscript whose moved-out whitespace makes both tildes valid still becomes Markdown, as the spec requires (for example `x \u{a0}~a~\u{a0} y`).
-> - **Pure mode** doesn’t use this code.
->
-> ### Result
->
-> - **Necessary corrections:** 0
-> - **Optional or trivial:** 0 new. These still stand from round 2:
->   - an element neighbor’s space can be lost in a fallback;
->   - the subscript flag leaks into nested conversions;
->   - an unmatched marker could be left behind.
-> - **Review-table summary:** The mixed-whitespace finding is resolved for leading and trailing runs with one or several non-breaking spaces, ASCII-only and NBSP-only cases still work, and only the earlier optional suggestions remain.
-
-The three optional suggestions were left unchanged.
+* an element neighbor's space can be lost in a fallback;
+* the subscript flag leaks into nested conversions;
+* an unmatched marker could be left behind.
 
 #### Changes after the implementation reviews
 
@@ -736,6 +662,10 @@ ends, with no neighbor inspection. As a result:
 * the spec no longer defines adjacency on its own: adjacent subscripts follow
   the adjacent-element runs of the emphasis section, and a subscript with a
   block descendant is handled before any combining.
+
+The test counts above (39 unit, 249 integration, 22 Subscript) are for
+`49f3b7d`. On the current branch `cargo test` runs 38 unit tests (1 ignored),
+244 integration tests in 11 files (17 in `subscript_tests.rs`), and 4 doc tests.
 
 The final specification review above ran before `49f3b7d`, when htmd had no
 `<sub>` handler; the round 8 rerun in part 6 ran after `6a34ffd`, against
