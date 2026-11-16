@@ -777,13 +777,16 @@ or more is text.
 | Subscript with attributes   | `x<sub class="c">␣a␣</sub>y`   | `x<sub class="c">␣a␣</sub>y`   | `x␣~a~␣y`         |
 | Subscript holding emphasis  | `x<sub>␣<em>a</em>␣</sub>y`    | `x␣~*a*~␣y`                    | `x␣~*a*~␣y`       |
 | Subscript inside subscript  | `x<sub>␣<sub>a</sub>␣</sub>y`  | `x␣~<sub>a</sub>~␣y`           | `x␣~a~␣y`         |
+| Markdown inside subscript   | `x<sub>␣<sub>␣a␣</sub>␣</sub>y` | `x<sub>␣~a~␣</sub>y`          | `x␣~a~␣y`         |
 | Adjacent subscripts         | `<sub>a</sub><sub>b</sub>`     | `<sub>a</sub><sub>b</sub>`     | `ab`              |
 | Subscript with paragraphs   | `<sub><p>a</p><p>b</p></sub>`  | `<sub>⏎<p>a</p><p>b</p></sub>` | `a⏎⏎b`            |
 
 A Markdown subscript needs whitespace, punctuation, or a line edge on the outer
 side of each tilde, so it depends on the text around the element. As with
 emphasis (see "Emphasis and strong emphasis"), htmd does not examine that text.
-It writes a subscript as Markdown only when the content's own leading and
+Where emphasis only needs content that does not start or end with punctuation
+(`*` may be intraword), a single `~` may not, so htmd writes a subscript as
+Markdown only when the content's own leading and
 trailing whitespace can be moved outside the tildes, which guarantees that the
 opening `~` follows whitespace and the closing `~` precedes it, whatever the
 element's neighbors are. Every other subscript is serialized in Faithful mode
@@ -821,12 +824,19 @@ In `TranslationMode::Faithful`:
    descendant with a CommonMark type-6 name, serialize the enclosing `<sub>` as
    an HTML block, with a newline after its opening tag so it opens a type-7
    block; apply the existing blank-line encoding rules.
-2. Otherwise, if the element has attributes or is inside another `<sub>`,
-   serialize the entire element as HTML, as for emphasis inside emphasis.
+2. Otherwise, if the element has attributes, serialize the entire element as
+   HTML, as for emphasis.
 3. Otherwise, if step 3 above allows Markdown, move the leading and trailing
    whitespace outside the remaining content and surround that content with `~`.
 4. Otherwise, write `<sub>`, the content with its edge whitespace, and
    `</sub>`.
+
+A subscript inside a subscript needs no rule of its own: the inner element is
+translated first, and when it is written as `~a~`, that `~` is an unescaped
+tilde in the outer content, so step 3.3 serializes the outer element. This is
+what emphasis inside emphasis does: the outer element is serialized and the
+inner one stays Markdown, so `x<sub>␣<sub>␣a␣</sub>␣</sub>y` becomes
+`x<sub>␣~a~␣</sub>y`, as `<em><em>a</em></em>` becomes `<em>*a*</em>`.
 
 In `TranslationMode::Pure`, which writes no HTML:
 
@@ -834,12 +844,18 @@ In `TranslationMode::Pure`, which writes no HTML:
    type-6 name, omit its delimiters and translate its children in the incoming
    context. At the document root, `<sub><p>a</p><p>b</p></sub>` becomes
    `a⏎⏎b`.
-2. Otherwise, drop the element's attributes. If it is inside another `<sub>`,
-   write its content alone.
+2. Otherwise, drop the element's attributes, as for emphasis.
 3. Otherwise, if step 3 above allows Markdown, move the leading and trailing
    whitespace outside the remaining content and surround that content with `~`.
 4. Otherwise, write the content, including its leading and trailing whitespace,
    without tildes.
+
+Unlike emphasis, which Pure mode always writes with its delimiters, step 4
+drops the tildes. A single `~` cannot be intraword, so `H~2~O` would read as
+literal tildes rather than a subscript; and nested subscripts cannot be written
+as `~~a~~`, which reads as strikethrough. So when an inner subscript is written
+as `~a~`, step 3.3 drops the outer element's tildes:
+`x<sub>␣<sub>␣a␣</sub>␣</sub>y` becomes `x␣~a~␣y`.
 
 Adjacent subscripts are an adjacent-element run, as described in the emphasis
 section: Faithful mode serializes each element of the run, and Pure mode

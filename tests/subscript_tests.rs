@@ -56,7 +56,7 @@ fn pure(html: &str) -> String {
 }
 
 /// The section's table, row by row: HTML in, faithful expected, pure expected.
-const TABLE: [(&str, &str, &str); 15] = [
+const TABLE: [(&str, &str, &str); 16] = [
     ("x<sub> a </sub>y", "x ~a~ y", "x ~a~ y"),
     ("<sub>a</sub>", "<sub>a</sub>", "a"),
     ("x <sub>i</sub> y", "x <sub>i</sub> y", "x i y"),
@@ -76,6 +76,11 @@ const TABLE: [(&str, &str, &str); 15] = [
     (
         "x<sub> <sub>a</sub> </sub>y",
         "x ~<sub>a</sub>~ y",
+        "x ~a~ y",
+    ),
+    (
+        "x<sub> <sub> a </sub> </sub>y",
+        "x<sub> ~a~ </sub>y",
         "x ~a~ y",
     ),
     ("<sub>a</sub><sub>b</sub>", "<sub>a</sub><sub>b</sub>", "ab"),
@@ -212,9 +217,20 @@ fn pure_hard_breaks_move_outside() {
     assert_eq!("<p>x <sub>a<br></sub> y</p>\n", render("x ~a<br>~ y"));
 }
 
-/// Faithful step 2: attributes, and a subscript inside a subscript.
+/// Faithful step 2: attributes. A subscript inside a subscript follows emphasis
+/// inside emphasis: the inner one is translated, and the outer one is
+/// serialized when the inner one's tildes are in its content.
 #[test]
 fn attributes_and_nesting() {
+    assert_eq!("<em>*a*</em>", faithful("<em><em>a</em></em>"));
+    assert_eq!(
+        "x<sub> ~a~ </sub>y",
+        faithful("x<sub> <sub> a </sub> </sub>y")
+    );
+    assert_eq!(
+        "<p>x<sub> <sub>a</sub> </sub>y</p>\n",
+        render(&faithful("x<sub> <sub> a </sub> </sub>y"))
+    );
     assert_eq!(
         r#"x <sub title="t">a</sub> y"#,
         faithful(r#"x <sub title="t">a</sub> y"#)

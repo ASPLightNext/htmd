@@ -25,27 +25,26 @@ upstream `2e7bf3a`).
 
 #### Khamzin Daulet
 
-Prompting Claude Sonnet 5.5 (`claude-sonnet-5-5`), high effort, with `Verify
-that you can compile and run the project in the current git repo.` produced:
+Prompting claude-opus-5-5 through the Kasper CLI agent with `Verify that you
+can compile and run the project in the current git repo.` produced:
 
 > All three CI checks pass, and the two examples I ran succeeded. I used
-> toolchain cargo 1.99.1 / rustc 1.99.1 (`aarch64-apple-darwin`), with
-> `~/.cargo/bin` on `PATH`.
+> toolchain cargo 1.99.1 / rustc 1.99.1 (`aarch64-apple-darwin`).
 >
-> HEAD is `c98556c` on branch `subscript-htmd`. The tracked files with
-> uncommitted changes are `subscript_submission.md` and
-> `translation_approach.md`, which are documentation, and `.idea/workspace.xml`,
-> which is IDE state; none of them affects the build. I didn't change any
-> tracked files while verifying.
+> HEAD is `ebd8de4` on branch `subscript-htmd`. The tracked files with
+> uncommitted changes are `src/element_handler/sub.rs`,
+> `tests/subscript_tests.rs`, `translation_approach.md`, and `submission.md`;
+> the checks below ran against that working tree. I didn't change any tracked
+> files while verifying.
 >
 > `htmd` is a library crate, so "run" here means the test suite and the
-> examples. The three checks `AGENTS.md:52-59` says CI requires:
+> examples. The three checks CI requires:
 >
 > | Command                              | Result                                                                                                                                  |
 > | ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------- |
-> | `cargo build`                        | Finished the `dev` build of `htmd v0.5.5`, exit 0                                                                                       |
+> | `cargo build`                        | Finished the `dev` build, exit 0                                                                                                        |
 > | `cargo clippy -q -- --deny warnings` | No warnings, exit 0                                                                                                                     |
-> | `cargo test`                         | Exit 0, no failures: 36 unit tests passed (1 ignored), 227 integration tests passed across 10 files in `tests/`, and 4 doc tests passed |
+> | `cargo test`                         | Exit 0, no failures: 38 unit tests passed (1 ignored), 244 integration tests passed across 11 files in `tests/` (17 of them in `subscript_tests.rs`), and 4 doc tests passed |
 >
 > Examples:
 >
@@ -120,8 +119,8 @@ Output:
 | 4     | 6        | `~a~~b~` actually reads as text (the round 3 reviewer was wrong; verified); runs of two escaped too (`<sub>a~~b</sub>`, strikethrough); code fence at line start; `^` escaped when superscript is also enabled                                     |
 | 5     | 5        | `\~~~` leaves a live `~~` that blocks the closing `~`; Pure combines adjacent subscripts (`~ab~`); "Unicode whitespace" renamed to the `char::is_whitespace` set; hard-break reason depends on `BrStyle`; a backslash neighbor escapes the opener |
 | 6     | 4        | Findings in part 4, all applied                                                                                                                                                                                                                                         |
-| 7     | 2        | Step 5 now says it needs the emitted Markdown around the element, unlike the emphasis section; step 3's reason corrected (an unmatched `~~` run, not a balanced strikethrough, blocks the closing `~`)                                                                  |
-| 8     | 3        | Clarified which emitted characters determine subscript validity, specified where edge whitespace stays on fallback, and added three boundary examples.                                                                                                                  |
+| 7     | 5        | Findings in part 5 (Opus rerun on the current section), not yet applied                                                                                                                                                                                                 |
+| 8     | 0        | Rerun against the whitespace-only rule: every case behaves as specified with no neighbor inspection; the earlier emitted-neighbor proposal was impractical and was removed.                                                                                             |
 | 9     | 1        | Step 3 now checks the content after text-node tildes are escaped, so it no longer contradicts the `<sub>a~b</sub>` → `~a\~b~` row; only an unescaped `~` written by another handler forces the HTML fallback.                                                           |
 
 4. Round 6 review
@@ -225,151 +224,148 @@ Output:
 5. Review (round 7)
 ------------------------
 
-Prompting Claude Sonnet 5.5 (`claude-sonnet-5-5`), with a fresh read-only
-reviewer sub-agent (the `Explore` agent) given the prompt below in one message,
-produced the following output. Round 7 reviewed the section as
-it stands on `subscript-htmd` (`c98556c`), after all round 6 findings were
-applied. Unlike rounds 1 to 6, it used Claude Sonnet 5.5 rather than
-`claude-opus-5-5`. The session ran at high effort; the sub-agent's own effort
-level was not set separately.
+Prompting claude-opus-5-5 through the Kasper CLI agent, with a fresh read-only
+reviewer sub-agent given the system prompt and prompt below, produced the
+following output. This round replaces an earlier round 7 run with Claude Sonnet
+5.5; it reviewed the section as it stands in the working tree on
+`subscript-htmd` (HEAD `ebd8de4`, with uncommitted changes), so it postdates the
+changes recorded in rounds 8 and 9. The sub-agent's effort level was not set
+separately.
 
-The prompt keeps the system prompt and the task of part 4, with four changes:
-it names `translation_approach.md` by path, since there is no `.review-ref/`
-copy of the pulldown-cmark source, so the reviewer fetched v0.13.4 from GitHub;
-it forbids changing the repository; it allows "Findings: 0"; and it asks for a
-list of what the reviewer checked. The local scratch directory is shortened to
-`<scratchpad>` below.
+The system prompt is the one in part 4. The prompt keeps the task of part 4,
+with three changes: it names `translation_approach.md` by path and points to
+both the `.review-ref/` copy and the full pulldown-cmark 0.13.4 crate source;
+it forbids changing any file; and it allows "Findings: 0" and asks for a list
+of what the reviewer checked.
 
 Prompt:
 
-> You are a strict technical reviewer of a design spec for htmd, a Rust
-> HTML-to-Markdown converter. Report only concrete errors: factual mistakes,
-> contradictions, wrong examples, and missing edge cases that would produce
-> incorrect output. Do not propose rewrites, style changes, or new prose. Each
-> finding: one or two sentences, with the evidence.
+> You are strictly READ-ONLY: do not create, edit, or delete any file.
 >
-> You are strictly READ-ONLY: do not create, edit, or delete any file in the
-> repo, and do not run git commands that change anything. You may write scratch
-> files only under `<scratchpad>/review7/` (download reference sources there).
->
-> Task: Review the section named "Subscript" in
-> `translation_approach.md` (the last section of that file, starts at the line
-> `### Subscript`).
+> Task: Review the section named "Subscript" in `translation_approach.md` (the
+> last section of that file, starts at the line `### Subscript`).
 >
 > Context: the rest of that file is the established spec; read the "Translating
 > HTML nodes", "Emphasis and strong emphasis", and "Math" sections for
 > conventions (Faithful vs Pure mode, serialization as HTML, adjacent-element
-> runs). The target reader is pulldown-cmark 0.13.4. There is no Rust toolchain
-> on this machine, so fetch the reference source from GitHub
-> (`raw.githubusercontent.com/pulldown-cmark/pulldown-cmark/v0.13.4/pulldown-cmark/...`):
-> `src/firstpass.rs` (`delim_run_can_open` / `delim_run_can_close` near line
-> 2254; tilde run scanning near line 935), `src/parse.rs` (tilde handling near
-> line 988 and `InlineStack::find_match` near line 1627), `src/scanners.rs` and
-> `src/puncttable.rs` (`is_punctuation`), and `specs/super_sub.txt` and
-> `specs/strikethrough.txt`. Use curl via Bash or WebFetch. Verify every claim
-> in the section against that source; the htmd code itself (`src/dom_walker.rs`,
-> `src/element_handler/`) is a reference for how text is escaped today.
+> runs). The target reader is pulldown-cmark 0.13.4. Its reference source is in
+> `.review-ref/` (firstpass.rs, parse.rs, scanners.rs, puncttable.rs,
+> super_sub.txt, strikethrough.txt) and the full crate is in the local cargo
+> registry: `src/firstpass.rs` (`delim_run_can_open` / `delim_run_can_close`
+> near line 2254; tilde run scanning near line 935), `src/parse.rs` (tilde
+> handling near line 988 and `InlineStack::find_match` near line 1627),
+> `src/scanners.rs` and `src/puncttable.rs` (`is_punctuation`), and
+> `specs/super_sub.txt` and `specs/strikethrough.txt`. Verify every claim in
+> the section against that source; the htmd code itself (`src/dom_walker.rs`,
+> `src/element_handler/`, including `sub.rs`) is a reference for how text is
+> escaped today.
 >
 > Return a numbered list of findings, at most 12, most severe first, with
 > file:line evidence from the pulldown-cmark source. Then a one-line count:
 > "Findings: N". If you find nothing wrong, say so and give "Findings: 0". Also
 > list briefly what you checked and found correct.
 
-The output below is the reviewer's report, unedited apart from the shortened
-scratch path. No finding is struck out, because both were confirmed. Finding 1
-is confirmed by reading the spec: the emphasis section does say that examining
-the text before and after an element is not implemented. Finding 2 is
-confirmed by running pulldown-cmark 0.13.4 in Rust (rustc 1.99.1, with
-`ENABLE_SUBSCRIPT | ENABLE_STRIKETHROUGH`): `~a ~~b~~ c~` renders
-`<sub>a <del>b</del> c</sub>`, so a balanced `~~` does not block the closing
-`~`, while `~a b~~ c~` stays text, because an unmatched `~~` does. `~a\~b~`
-and `~a\~\~b~` render as subscripts containing `~` and `~~`, which confirms
-that escaped tildes are safe inside one. Both findings were then applied to
-the spec with small edits: step 3 now says an unmatched `~~` run blocks the
-closing `~`, and step 5 now says it needs the emitted Markdown around the
-element, unlike the emphasis section.
+The output below is the reviewer's report, unedited. We spot-checked findings 2
+and 5 against the sources: `super_sub.txt` reads `~This ~~is stricken.~` as
+`<sub>This ~~is stricken.</sub>`, and `src/util/escape.rs:218-227` escapes only
+runs of one or two in `alt` text. The findings have not yet been applied to the
+spec.
 
 Output:
 
-> Review of the "Subscript" section (`translation_approach.md:736-818`) against
-> pulldown-cmark v0.13.4, source copied to `<scratchpad>/review7/`. I found one
-> contradiction with the established spec and one wrong rationale. No wrong
-> table row and no wrong expected output.
+> 1. **Step 2 gives the wrong reason for treating a Pure-mode hard break as
+>    whitespace (lines 809–811).** For a trailing `\⏎` break, `trim_end` already
+>    moves the `⏎` outside the tildes. What actually goes wrong is the leftover
+>    backslash: it escapes the closing tilde (`␣~a\~⏎`), so the subscript never
+>    closes. The scanner treats `\` before ASCII punctuation as an escape and
+>    skips that character (`.review-ref/firstpass.rs:909-913`); htmd's own
+>    comment says the same (`src/element_handler/sub.rs:125-126`). "A closing
+>    `~` cannot start a line" is true (`firstpass.rs:2307-2309`), but the split
+>    never produces that layout. The `BrStyle::TwoSpaces` half is moot: `␣␣⏎` is
+>    all `char::is_whitespace`, so the plain split already moves it outside. The
+>    rule is right; its stated reason is not.
 >
-> 1. **Step 5 contradicts the emphasis section.** Step 5
->    (`translation_approach.md:790-795`) needs the emitted Markdown character
->    before the opening `~` and after the closing `~`. The after-character may
->    come from a later sibling, including a pass-through `<span>` (`:794-795`).
->    The emphasis section says (`:509-518`) that examining text "preceding and
->    following" is "not implemented" and that "the current implementation makes
->    this difficult to determine". That section therefore chose the conservative
->    edge-character rule. The Subscript section assumes the lookahead exists
->    without saying the convention changed.
+> 2. **Step 3.3 overstates what an unmatched `~~` does (lines 818–819).** The
+>    text says an unmatched `~~` run inside "stops the closing `~` from
+>    matching", but a `~~` that can only open does not. `find_match` skips stack
+>    entries whose run length differs (`.review-ref/parse.rs:1640-1642`),
+>    matches the outer `~`, and turns the skipped `~~` into text
+>    (`parse.rs:1651-1657`). The spec's own test shows this:
+>    `~This ~~is stricken.~` reads as `<sub>This ~~is stricken.</sub>`
+>    (`.review-ref/super_sub.txt:31-34`). Only a `~~` that can close and finds
+>    no partner blocks: it sets the shared tilde lower bound (`parse.rs:1661`,
+>    `1613-1614`, `1596-1597`), which then hides the outer `~` opener. The
+>    conservative rule is still safe; the explanation is wrong.
 >
-> 2. **The step 3 rationale for `~~` is wrong as stated.** Step 3
->    (`:785-788`) says a `~~` run inside the content, "such as a strikethrough
->    written by another handler", "stops the closing `~` from matching". A
->    balanced `~~b~~` does not stop it.
->    * In `~a ~~b~~ c~`, the `~~` closer matches its `~~` opener. `find_match`
->      (`parse.rs:1627-1660`) then calls `truncate(matching_ix)`
->      (`parse.rs:1587-1593`) and sets no lower bound. The final `~` still
->      matches the stack entry at index 0, giving `<sub>a <del>b</del> c</sub>`.
->    * The `super_sub.txt` example `~This ~~is stricken.~` shows the same: an
->      opening `~~` inside is harmless.
->    * What blocks the closer is a failed closer-capable run. Examples are a
->      `~~` closer with no opener, as in `~a b~~ c~`, and a stray `^`. A failed
->      match calls `set_lowerbound` (`parse.rs:1597-1599`), which sets
->      `lower_bounds[TILDES] = stack.len()`.
->    * A strikethrough at the content edge (`<sub><del>a</del></sub>`) does
->      fail, but only because `~` plus `~~` adjoin to make a run of three, which
->      is text (`firstpass.rs:935`). The step 3 rule still produces safe output.
->      Only its stated reason is wrong.
+> 3. **The opening rule (lines 752–754) leaves out the tilde exception, which
+>    the spec gives only for closing.** A single `~` directly after a `~` can
+>    open even when the character before it is not whitespace or punctuation,
+>    provided the next character is not punctuation (`firstpass.rs:2289-2291`).
+>    Also, a `~` with no character after it can never open
+>    (`firstpass.rs:2261-2265`). The wording "the character after it is not
+>    whitespace" does not say what happens at the end of the line. Neither gap
+>    changes htmd's output, because htmd only writes a `~` delimiter with
+>    whitespace outside it.
 >
-> Findings: 2
+> 4. **Step 3.3 also rejects tildes that pulldown-cmark never reads as
+>    delimiters (lines 815–816).** The spec exempts code spans, math, autolinks
+>    and (by the existing link rules) link destinations from tilde escaping
+>    (line 795–796), so their `~` stay unescaped in the content. The step's
+>    claim that only another handler such as `<del>` writes an unescaped `~`
+>    misses these, and any such tilde makes the check fail. So
+>    `x<sub>␣<code>a~b</code>␣</sub>y` is serialized in Faithful mode, and in
+>    Pure mode (step 4) it loses its subscript entirely. The table has no row
+>    for this. I did not trace pulldown-cmark's code-span scanning to cite a
+>    line showing these tildes are inert.
 >
-> Checked and found correct:
+> 5. **The text and the code disagree on image `alt` text inside a subscript
+>    (lines 799–800).** The spec says every `~` of a run of three or more is
+>    escaped inside subscript content, but the `alt` escaper escapes only runs
+>    of one or two and never checks whether it is inside a subscript
+>    (`src/util/escape.rs:218-227`; compare the text-node path,
+>    `src/dom_walker.rs:546`). So `<sub>␣<img alt="a~~~b">␣</sub>` leaves
+>    unescaped tildes, step 3.3 rejects it, and Pure mode drops the subscript.
+>    A run of three is plain text to the reader (`firstpass.rs:935-937`), so the
+>    rule's own reason does not hold here.
 >
-> * **Opener rule** (`firstpass.rs:2254-2295`): returns false if there is no next
->   character or the next character is whitespace. It returns true at `ix == 0`.
->   Otherwise the previous character must be whitespace or punctuation. The
->   `prev == '~'` branch at `:2289` is redundant because `~` is itself
->   punctuation.
-> * **Closer rule** (`firstpass.rs:2300-2337`): `ix == 0` gives false,
->   whitespace before gives false, and end of text gives true. A single `~`
->   closes when the next character is whitespace or punctuation, or when the
->   previous character is `~` (`:2332`).
-> * **"Start of line" and "end of line"** match the code. `ix` is relative to
->   the line start passed to `parse_line` (`firstpass.rs:772`). The character
->   after a line end is a newline, which is whitespace.
-> * **Whitespace** is `char::is_whitespace`, which includes U+00A0.
-> * **Punctuation:** `is_punctuation` includes ASCII punctuation plus the Unicode
->   P and S categories. I decoded the `PUNCT_TAB` and mask tables: `©`, `€`, `™`
->   and emoji return true, and U+00A0 returns false.
-> * **Run handling:** `is_valid_seq` (`firstpass.rs:935`) makes a run of three or
->   more text. Runs pair only with equal `run_length` (`parse.rs:1640`). A pair
->   of `~~` is Strikethrough, or Text without `ENABLE_STRIKETHROUGH`, and a
->   single `~` is Subscript, then Strikethrough, then Text (`parse.rs:988-1013`).
-> * **Escapes:** `\~` is honored (`super_sub.txt` "Backslash escapes"). A `~`
->   after an escaped `\~` can still open and close, so `~a\~~` and `~\~a~` work.
-> * **Neighbouring tildes:** `~a~~b~` reads as text. The `~~` run fails to match
->   and sets the lower bound.
-> * **`~a.~.b~ c~`:** the inner `~` is both open and close (prev `.`, next `.`)
->   and closes the outer subscript.
-> * **`~a^ b~` without escaping** reads as text. A failed `^` closer sets the
->   shared TILDES bound. The `\^` escape is needed only when superscript is
->   enabled, since `^` is registered only then (`firstpass.rs:2371`).
-> * **Rest of the section:**
->   * All 12 table rows are consistent with the code.
->   * The `\~\~` escaping of runs of one or two, and of every `~` in a run of
->     three or more at line start, are consistent with the code. After an
->     escaped first tilde the leftover `~~` would be a valid run.
->   * The `firstpass.rs#L2254-L2337` range is right.
->   * Pure mode's hard-break handling is right: a closing `~` at line start has
->     whitespace before it, and with `TwoSpaces` an opening `~` is followed by
->     whitespace.
->   * Faithful adjacent subscripts match the emphasis section's run rule.
->   * The lower-bound clamping in `truncate` keeps a failed closer before an
->     enclosing opener from blocking a later subscript.
+> Findings: 5
+>
+> Checked and found correct against the pulldown-cmark source:
+>
+> * Option behavior: with subscript on, `~a~` reads as `<sub>`; without it, as
+>   strikethrough if that option is on, else text (`parse.rs:988-1010`). The `~`
+>   scanner is only active when one of the two options is set
+>   (`firstpass.rs:2365-2369`).
+> * Runs: a run of three or more is never a delimiter (`firstpass.rs:935-937`);
+>   runs pair only with runs of the same length (`parse.rs:1640`); a run of two
+>   is strikethrough or text (`parse.rs:988-996`).
+> * Opening: next character must not be whitespace; start of line opens;
+>   otherwise the previous character must be whitespace or punctuation
+>   (`firstpass.rs:2266-2271`, `2293-2294`).
+> * Closing: line start never closes; the previous character must not be
+>   whitespace; end of line, whitespace/punctuation after, or a `~` before all
+>   close (`firstpass.rs:2307-2336`).
+> * Whitespace is `char::is_whitespace`, which includes U+00A0.
+> * `is_punctuation` covers symbols: `©` (U+00A9) is set in the mask `0xdbfe`
+>   (`puncttable.rs:767`, `1500-1512`).
+> * `\~` is honored inside a subscript (`super_sub.txt:19-23`), and
+>   `␣~a\~\~b~␣` is the correct escape of `<sub>␣a~~b␣</sub>`.
+> * Every table row except the cases noted above, including nested subscripts,
+>   subscript holding emphasis, and the paragraphs row (type-7 block opener).
+> * Faithful and Pure steps 1–4 match `src/element_handler/sub.rs` and the
+>   tilde escaping in `src/dom_walker.rs:537-553`.
+> * `H~2~O` cannot open (`firstpass.rs:2293`); `x␣~i~␣y` would read as a
+>   subscript.
+> * The firstpass.rs#L2254-L2337 link range matches the two delimiter
+>   functions.
+>
+> Not verified:
+>
+> * That pulldown-cmark scans inlines line by line, so offset 0 means the start
+>   of a line. I relied on this for the "start of the line" and "a closing `~`
+>   cannot start a line" claims.
+> * I could not open the crate under `~/.cargo` (outside the workspace) and
+>   used the `.review-ref` copies throughout.
 
 ## 6. Last review (round 8) — Dustin Johnson
 
@@ -462,76 +458,41 @@ which changes to make.
 
 #### 1. Rule established
 
-With `ENABLE_SUBSCRIPT` enabled, a single `~` opens a subscript when it is followed by a non-whitespace character and preceded by the start of the line, whitespace, or punctuation. It closes one when preceded by a non-whitespace character and followed by whitespace, punctuation, or the end of the line. A tilde inside the original HTML does not determine this: the parser checks characters in the Markdown candidate, including the translated subscript content and the output of neighboring elements.
+With `ENABLE_SUBSCRIPT` enabled, a single `~` opens a subscript when it is followed by a non-whitespace character and preceded by the start of the line, whitespace, or punctuation. It closes one when preceded by a non-whitespace character and followed by whitespace, punctuation, or the end of the line. The parser checks the characters of the emitted Markdown, not those of the input HTML.
 
-The intended order is: trim the translated content’s edge whitespace, move that whitespace outside the would-be `~…~`, then test the delimiter boundaries in the prospective Markdown output for the current mode. For example, `H<sub> 2 </sub>O` becomes `H ~2~ O`, so both delimiters have whitespace neighbors and the parser recognizes the subscript.
+The current specification does not inspect those neighbors. As with emphasis, htmd writes a subscript as Markdown only when the translated content has whitespace at both ends: that whitespace moves outside the tildes, so the opening `~` always follows whitespace and the closing `~` always precedes it, whatever the element's neighbors are. Otherwise, Faithful mode writes `<sub>`, the content with its edge whitespace, and `</sub>`; Pure mode writes the content with its edge whitespace and no tildes. Both former ambiguities are gone: no step refers to emitted neighbors, and the fallback keeps the edge whitespace inside the element (Faithful) or in place (Pure).
 
-There are two ambiguities worth resolving in the current wording:
+#### 2. Verification
 
-- Step 5 says to inspect “emitted Markdown,” but does not explicitly say this means the *prospective, mode-specific* output after step 4—not the neighboring characters in the input HTML.
-- If the candidate fails and Faithful mode falls back to HTML, steps 4–5 do not say whether the fallback retains the original edge whitespace inside `<sub>` or keeps it moved outside. Both readings are plausible; the parser tests below show their different output.
+`cargo tree -i pulldown-cmark` reports **0.13.4**. Because htmd now implements the rule, the rerun converts each input with htmd itself in both modes, then reads the result back with pulldown-cmark 0.13.4 and **`ENABLE_SUBSCRIPT | ENABLE_STRIKETHROUGH`** (all other options disabled), recording whether `Event::Start(Tag::Subscript)` occurs. A `<sub>` in the rendered HTML without that event comes from raw HTML, not from a Markdown subscript.
 
-The single-tilde flanking rules themselves are already stated clearly. Nothing in these tests requires changing the existing choices about attributes, nesting, or escaping.
+| Input | Faithful output | Pure output | Markdown subscript event | Matches spec |
+| --- | --- | --- | --- | --- |
+| `H<sub>2</sub>O` | `H<sub>2</sub>O` | `H2O` | No (both modes) | Yes: no edge whitespace |
+| `H<sub>␣2␣</sub>O` | `H␣~2~␣O` | `H␣~2~␣O` | Yes (both modes); renders `H␣<sub>2</sub>␣O` | Yes |
+| `H<sub>␣2</sub>O` | `H<sub>␣2</sub>O` | `H␣2O` | No (both modes) | Yes: trailing whitespace missing |
+| `H<sub>2␣</sub>O` | `H<sub>2␣</sub>O` | `H2␣O` | No (both modes) | Yes: leading whitespace missing |
+| `x␣(<sub>i</sub>)␣y` | `x␣(<sub>i</sub>)␣y` | `x␣(i)␣y` | No (both modes) | Yes: punctuation neighbors are not inspected |
+| `H<sub>2</sub><span>O</span>` | `H<sub>2</sub><span>O</span>` | `H2O` | No (both modes) | Yes |
+| `(<sub>i</sub><span>O</span>)` | `(<sub>i</sub><span>O</span>)` | `(iO)` | No (both modes) | Yes: the result no longer depends on the mode of a neighbor |
+| `x␣<sub>i</sub>␣y` | `x␣<sub>i</sub>␣y` | `x␣i␣y` | No (both modes) | Yes: matches the "Subscript between words" row |
+| `x<sub>␣a␣</sub>y` | `x␣~a~␣y` | `x␣~a~␣y` | Yes (both modes) | Yes: matches the "Edge whitespace" row |
 
-#### 2. Parser verification
+In every case, a Markdown form appears exactly when the content has whitespace at both ends, and that form always produces a subscript event. No output depends on characters outside the element.
 
-`Cargo.lock` pins `pulldown-cmark` **0.13.4**; `cargo tree -i pulldown-cmark` also reported `pulldown-cmark v0.13.4`. The temporary harness enabled **`ENABLE_SUBSCRIPT | ENABLE_STRIKETHROUGH`**; all other parser options were disabled. It detected `Event::Start(Tag::Subscript)` and rendered the events to HTML. These are parser results—not htmd conversion results. A raw-HTML fallback can render a `<sub>` element even when there is no Markdown `Tag::Subscript` event.
-
-In the table, `␣` denotes a literal space; spaces passed to the harness were ordinary U+0020 spaces.
-
-| Input / case | Candidate Markdown tested | Parser observation |
-| --- | --- | --- |
-| `H<sub>2</sub>O`, Faithful fallback | `H<sub>2</sub>O` | No Markdown subscript event; raw HTML renders `<sub>2</sub>`. |
-| Same, hypothetical Markdown form | `H~2~O` | No subscript event; tildes remain literal. `H` blocks opening and `O` blocks closing. |
-| `H<sub> 2 </sub>O` | `H␣~2~␣O` | Subscript event; rendered output is `H␣<sub>2</sub>␣O`. The moved spaces remain outside the subscript. |
-| `H<sub> 2</sub>O`, fallback retaining original whitespace | `H<sub>␣2</sub>O` | No Markdown subscript event; raw HTML retains the space inside `<sub>`. |
-| Same, fallback after moving whitespace | `H␣<sub>2</sub>O` | No Markdown subscript event; the space is outside `<sub>`. |
-| Same, hypothetical Markdown form | `H␣~2~O` | No subscript event; `O` blocks closing. |
-| `H<sub>2 </sub>O`, fallback retaining original whitespace | `H<sub>2␣</sub>O` | No Markdown subscript event; raw HTML retains the space inside `<sub>`. |
-| Same, fallback after moving whitespace | `H<sub>2</sub>␣O` | No Markdown subscript event; the space is outside `<sub>`. |
-| Same, hypothetical Markdown form | `H~2~␣O` | No subscript event; `H` blocks opening. |
-| `x (<sub>i</sub>) y` | `x (~i~) y` | Subscript event; rendered output is `x␣(<sub>i</sub>)␣y`. Parentheses are acceptable punctuation neighbors. |
-| `H<sub>2</sub><span>O</span>`, Faithful | `H<sub>2</sub><span>O</span>` | No Markdown subscript event; raw `<sub>` and `<span>` HTML render. `H` blocks opening. |
-| Same, Faithful hypothetical Markdown form | `H~2~<span>O</span>` | No subscript event; `H` still blocks opening. The emitted character after the closing tilde would be `<`. |
-| Same, Pure | `H2O` | No Markdown subscript event; the subscript is emitted as plain content and the span’s text passes through. |
-| Same, Pure hypothetical Markdown form | `H~2~O` | No subscript event; the emitted neighbor is `O` (and `H` also blocks opening). |
-
-For the span case, the difference between modes is real even though `H` already makes this particular subscript fail: Faithful emits `<span>O</span>`, while Pure emits the text `O`. A more discriminating candidate, `(~i~<span>O</span>)`, produced a Markdown subscript event; its Pure text-neighbor counterpart `(~i~O)` did not.
-
-**What I ran:** `cargo tree -i pulldown-cmark` reported version 0.13.4. I created and removed a temporary crate whose manifest pinned `pulldown-cmark = "=0.13.4"`.
-
-*[Dustin’s note: The command list was blank in the copied response, so the exact harness command is not recorded.]*
-
-The harness used `Parser::new_ext(markdown, Options::ENABLE_SUBSCRIPT | Options::ENABLE_STRIKETHROUGH)`, detected `Event::Start(Tag::Subscript)`, and called `pulldown_cmark::html::push_html`. It tested the candidates listed above. The additional-candidate run exited 0 with a harmless unused-import warning.
+**What I ran:** `cargo tree -i pulldown-cmark` → `pulldown-cmark v0.13.4`. A temporary crate outside the repository (since removed) depended on `htmd` by path and on `pulldown-cmark = "=0.13.4"`; it converted the inputs above with `HtmlToMarkdown::builder().options(Options { translation_mode, ..Default::default() })`, parsed each result with `Parser::new_ext(markdown, Options::ENABLE_SUBSCRIPT | Options::ENABLE_STRIKETHROUGH)`, and rendered it with `pulldown_cmark::html::push_html`. `cargo run` exited 0. `cargo test` in the repository passed.
 
 #### 3. Proposed specification change
 
-I recommend replacing steps 4–5 with the following. This makes the characters under inspection, fallback behavior, and mode difference explicit while leaving the other existing decisions intact:
-
-> 4. For a Markdown candidate, move the leading whitespace of the translated content to just before the opening `~`, and the trailing whitespace to just after the closing `~`.
-> 5. Test that candidate against the complete prospective Markdown output for the current mode. Inspect the emitted characters immediately adjacent to each tilde, including the first and last emitted characters of the content and output from neighboring elements; do not use adjacent characters from the input HTML. Apply the single-tilde flanking rules above, and retain the fallback when an unescaped `~` or `\` is immediately outside the pair. If either delimiter is invalid, Faithful mode serializes the original `<sub>` element as HTML, preserving its original edge whitespace; Pure mode emits the relocated edge whitespace and the trimmed content without tildes. A letter immediately before the opening tilde or after the closing tilde blocks that delimiter, and a neighboring tilde merges with it: `~a~~b~` reads as text. A neighbor can come from any element, including a `<span>` whose emitted Markdown differs by mode.
-
-Three useful additions to the existing table:
-
-| Description | HTML in | Faithful expected |
-| --- | --- | --- |
-| Leading edge whitespace with an intraword neighbor | `H<sub>␣2</sub>O` | `H<sub>␣2</sub>O` |
-| Trailing edge whitespace with an intraword neighbor | `H<sub>2␣</sub>O` | `H<sub>2␣</sub>O` |
-| Mode-dependent span neighbor | `(<sub>i</sub><span>O</span>)` | `(~i~<span>O</span>)` |
-
-For the first two rows, Pure would emit `H␣2O` and `H2␣O`, respectively: no HTML and no subscript markup. For the span row, Pure would emit `(iO)`; Faithful’s HTML span leaves `<` next to the closing tilde, while Pure’s text neighbor `O` blocks it.
+None. The rule is clear and is independent of any traversal or buffering strategy. The existing table already covers the decisive cases ("Edge whitespace", "Subscript between words", "Intraword subscript", "Leading whitespace only", "Trailing whitespace only"). The mode-dependent span row proposed in the original round 8 is no longer meaningful, since neighbors are not inspected.
 
 #### 4. Review record
 
-**Actionable findings: 3**
+**Actionable findings: 0**
 
-1. Clarify that boundary checks use the complete prospective Markdown output for the active mode, after edge-whitespace relocation—not input-HTML neighbors.
-2. Specify what happens to edge whitespace when step 5 falls back: retain it inside the original Faithful HTML element; in Pure, emit it outside the plain content.
-3. Add asymmetric edge-whitespace and mode-dependent span examples; the current table does not cover those cases.
+**Commands and results:** `cargo tree -i pulldown-cmark` → `pulldown-cmark v0.13.4`; the temporary htmd + pinned-parser harness → exit 0, with the observations tabulated above; `cargo test` → all suites passed. No shared files were edited by this round.
 
-**Commands and results:** `cargo tree -i pulldown-cmark` → `pulldown-cmark v0.13.4`; the temporary pinned-parser harness → exit 0, with the observations tabulated here; `git status --short` → `M subscript_submission.md`. That submission-file change was already present and left untouched. I did not edit `translation_approach.md` or any shared files.
-
-**Review-round summary (proposed):** Clarifies mode-specific delimiter checks and edge-whitespace handling on fallback, and adds asymmetric-whitespace and mode-dependent-span examples.
+**Review-round summary:** Rerun against the whitespace-only rule; every case behaves as specified with no neighbor inspection, so no changes were needed.
 
 ## Final submission
 

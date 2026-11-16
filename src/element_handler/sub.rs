@@ -21,7 +21,7 @@ use crate::{
     },
     options::TranslationMode,
     util::{
-        node::{get_parent_node, is_block_element, is_type_1_element},
+        node::{is_block_element, is_type_1_element},
         text::{concat_strings, frame_as_block, trim_newlines},
     },
 };
@@ -67,21 +67,6 @@ pub(crate) fn has_block_descendant(node: &Rc<Node>) -> bool {
     })
 }
 
-fn is_sub_element(node: &Node) -> bool {
-    matches!(&node.data, NodeData::Element { name, .. } if *name.local == *"sub")
-}
-
-fn is_inside_sub(node: &Rc<Node>) -> bool {
-    let mut current = get_parent_node(node);
-    while let Some(parent) = current {
-        if is_sub_element(&parent) {
-            return true;
-        }
-        current = get_parent_node(&parent);
-    }
-    false
-}
-
 pub(super) fn sub_handler(handlers: &dyn Handlers, element: &Element) -> Option<HandlerResult> {
     let is_faithful = handlers.options().translation_mode == TranslationMode::Faithful;
 
@@ -109,8 +94,7 @@ pub(super) fn sub_handler(handlers: &dyn Handlers, element: &Element) -> Option<
             return Some(HandlerResult::html(serialize_as_html_block(element)));
         }
     }
-    let is_nested = is_inside_sub(element.node);
-    if is_faithful && (!element.attrs.is_empty() || is_nested) {
+    if is_faithful && !element.attrs.is_empty() {
         return Some(serialize_element_result(handlers, element));
     }
 
@@ -118,9 +102,6 @@ pub(super) fn sub_handler(handlers: &dyn Handlers, element: &Element) -> Option<
         let _guard = SubscriptContentGuard::enter();
         handlers.walk_children_content(element.node, Context::INLINE)
     };
-    if is_nested {
-        return Some(content.into());
-    }
 
     let (lead, trimmed, trail) = split_edge_whitespace(&content, is_faithful);
     let is_markdown = !trimmed.is_empty()
