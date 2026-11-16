@@ -534,10 +534,11 @@ fn escape_if_needed(text: Cow<'_, str>) -> Cow<'_, str> {
     escape_html(escaped.into())
 }
 
-/// Writes a run of `run_len` tildes, `before` being the text node ahead of it.
-/// A run of one or two is escaped wherever it is, so that it opens no subscript
-/// or strikethrough. A longer run is text, and is escaped only where it could
-/// be read otherwise: at the start of a text node, which may start a line and
+/// Writes a run of `run_len` tildes, `before` being the part of its text node
+/// ahead of it. A run of one or two is escaped wherever it is, so that it opens
+/// no subscript or strikethrough. A longer run is text, and is escaped only
+/// where it could be read otherwise: at the start of a text node, after spaces
+/// at most, which may start a line and
 /// so open a code fence, and inside a subscript's content. There every tilde
 /// of the run is escaped, since the `~~` an escaped first tilde leaves behind
 /// still opens or closes a strikethrough. See the "Subscript" section of

@@ -12,13 +12,13 @@ upstream `2e7bf3a`).
 * Matzhan Aruzhan: Prompted the LLM (claude-opus-5-5) to write the Subscript
   section of `translation_approach.md`, which specifies how `<sub>` is
   translated to pulldown-cmark's `~a~` syntax and when it falls back to HTML,
-  and ran its six review rounds.
+  and ran review rounds 1–6.
 * Zhexenbiyev Arsen: Created the team's fork of htmd and the `subscript-htmd`
   branch, and opened the team's pull request upstream.
 * Khamzin Daulet: Verified that the project builds and passes the CI checks
   (`cargo build`, `cargo clippy`, `cargo test`) on the branch, recorded the
   output below, and ran review round 7 of the Subscript section (part 5).
-* Dustin Johnson: Verified the Windows build and tested subscript boundary cases with pulldown-cmark 0.13.4, then clarified the specification’s whitespace and fallback rules and added three examples.
+* Dustin Johnson: Verified the Windows build and tested subscript boundary cases with pulldown-cmark 0.13.4, then clarified the specification’s whitespace and fallback rules. The original round 8 proposed three example rows; its rerun (part 6) found that none were needed.
 
 2. Output of "Verify that you can compile and run the project in the current git repo."
 ----------------------------------------------------------------------------------------
@@ -64,7 +64,7 @@ can compile and run the project in the current git repo.` produced:
 >
 > - `cargo build` — passed
 > - `cargo clippy -- --deny warnings` — passed
-> - `cargo test` — 267 passed, 1 ignored
+> - `cargo test` — 286 passed, 1 ignored
 > - `cargo run --example simple` — ran successfully
 >
 > I installed the Rust stable toolchain and MSVC C++ Build Tools needed to compile. The repository working tree remains unchanged.
@@ -87,7 +87,8 @@ Prompting claude-opus-5-5 through the Kasper CLI agent with:
 3. Review rounds
 ----------------
 
-Each round used a fresh reviewer with the same prompt (shown in part 4). We
+Rounds 1–6 each used a fresh reviewer with the same prompt (shown in part 4);
+round 7 used a variant of it (part 5), and round 8 its own prompt (part 6). We
 applied only small, targeted edits, never the reviewer's rewrites. When
 reviewers disagreed, we tested the claim against pulldown-cmark 0.13.4.
 
@@ -109,6 +110,8 @@ with:
 > | 3     | 10       | NFC, not NFKC (ligature `ﬁ`); final sigma in `lower()`                                         |
 > | 4     | 5        | Findings below, all applied                                                                    |
 
+Rows 7–9 were added to the table by hand after the later rounds.
+
 Output:
 
 | Round | Findings | Main changes made                                                                                                                                                                                                                                  |
@@ -119,9 +122,9 @@ Output:
 | 4     | 6        | `~a~~b~` actually reads as text (the round 3 reviewer was wrong; verified); runs of two escaped too (`<sub>a~~b</sub>`, strikethrough); code fence at line start; `^` escaped when superscript is also enabled                                     |
 | 5     | 5        | `\~~~` leaves a live `~~` that blocks the closing `~`; Pure combines adjacent subscripts (`~ab~`); "Unicode whitespace" renamed to the `char::is_whitespace` set; hard-break reason depends on `BrStyle`; a backslash neighbor escapes the opener |
 | 6     | 4        | Findings in part 4, all applied                                                                                                                                                                                                                                         |
-| 7     | 5        | Findings in part 5 (Opus rerun on the current section), not yet applied                                                                                                                                                                                                 |
-| 8     | 0        | Rerun against the whitespace-only rule: every case behaves as specified with no neighbor inspection; the earlier emitted-neighbor proposal was impractical and was removed.                                                                                             |
-| 9     | 1        | Step 3 now checks the content after text-node tildes are escaped, so it no longer contradicts the `<sub>a~b</sub>` → `~a\~b~` row; only an unescaped `~` written by another handler forces the HTML fallback.                                                           |
+| 7     | 5        | Findings in part 5 (Opus rerun on the current section); 1, 2, 4 and 5 applied, 3 not (it changes no output)                                                                                                                                                                                                |
+| 8     | 0        | Rerun against the whitespace-only rule: every case behaves as specified with no neighbor inspection; the emitted-neighbor proposal was moved to a not-implemented note.                                                                                                |
+| 9     | 1        | Step 3 now checks the content after text-node tildes are escaped, so it no longer contradicts the `x<sub>␣a~b␣</sub>y` → `x␣~a\~b~␣y` row; only an unescaped `~` (from another handler, or a code span, math, or autolink) forces the fallback.                                                           |
 
 4. Round 6 review
 -----------------
@@ -268,8 +271,9 @@ Prompt:
 The output below is the reviewer's report, unedited. We spot-checked findings 2
 and 5 against the sources: `super_sub.txt` reads `~This ~~is stricken.~` as
 `<sub>This ~~is stricken.</sub>`, and `src/util/escape.rs:218-227` escapes only
-runs of one or two in `alt` text. The findings have not yet been applied to the
-spec.
+runs of one or two in `alt` text. Findings 1, 2, 4, and 5 were later applied
+to the spec (finding 5 by documenting that runs of three or more in `alt` text
+are left as they are); finding 3 was not, since it changes no output.
 
 Output:
 
@@ -370,6 +374,7 @@ Output:
 ## 6. Last review (round 8) — Dustin Johnson
 
 **Tool:** VS Code AI chat, Agent mode
+
 **Model and effort:** Exact model and effort setting not recorded.
 
 ### Prompt used
@@ -502,7 +507,7 @@ GitHub userid: `drj228`
 
 #### Contributions
 
-Finalized the Subscript specification through two review rounds, used Claude to implement the feature and regression tests, addressed implementation findings across four review rounds, and verified formatting, Build, Clippy, and all tests on Windows.
+Finalized the Subscript specification through two review rounds, used Claude to implement the feature and regression tests, addressed implementation findings across four review rounds, and verified formatting, build, Clippy, and all tests on Windows.
 
 #### Specification review rounds
 
@@ -612,9 +617,9 @@ Windows verification after the final correction:
 | `cargo fmt --check` | Passed |
 | `cargo build --locked` | Passed |
 | `cargo clippy --locked -- --deny warnings` | Passed |
-| `cargo test --locked` | Passed: 39 unit tests, 249 integration tests, and 4 documentation tests; 1 ignored |
+| `cargo test --locked` | Passed: 38 unit tests, 244 integration tests, and 4 documentation tests; 1 ignored |
 
-The integration tests include 22 Subscript tests. These Windows checks used the normal repository dependencies and lockfile, rather than Claude’s substitute offline dependency setup.
+The integration tests include 17 Subscript tests. These Windows checks used the normal repository dependencies and lockfile, rather than Claude’s substitute offline dependency setup.
 
 #### Last implementation review
 
@@ -716,3 +721,22 @@ Claude’s response:
 > - **Review-table summary:** The mixed-whitespace finding is resolved for leading and trailing runs with one or several non-breaking spaces, ASCII-only and NBSP-only cases still work, and only the earlier optional suggestions remain.
 
 The three optional suggestions were left unchanged.
+
+#### Changes after the implementation reviews
+
+The implementation reviewed above (`49f3b7d`) is not the one on the branch now.
+Commit `6a34ffd` replaced it with the simpler rule of the final spec: a
+subscript is written as `~…~` only when its content has whitespace at both
+ends, with no neighbor inspection. As a result:
+
+* caret escaping was removed; `^` is left alone (test `carets_are_left_alone`);
+* the Faithful fallback no longer shares an ASCII space outside the element; it
+  writes `<sub>`, the content with its edge whitespace, and `</sub>`, so the
+  NBSP and mixed-whitespace fixes and the `fallback_shares` test are gone;
+* the spec no longer defines adjacency on its own: adjacent subscripts follow
+  the adjacent-element runs of the emphasis section, and a subscript with a
+  block descendant is handled before any combining.
+
+The final specification review above ran before `49f3b7d`, when htmd had no
+`<sub>` handler; the round 8 rerun in part 6 ran after `6a34ffd`, against
+htmd's own output.

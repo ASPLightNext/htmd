@@ -133,10 +133,13 @@ fn split_edge_whitespace(content: &str, is_faithful: bool) -> (&str, &str, &str)
         }
     }
     let mut end = start + content[start..].trim_end().len();
-    if !is_faithful && content[end..].starts_with('\n') {
-        let body = &content[start..end];
-        let backslashes = body.len() - body.trim_end_matches('\\').len();
-        if !backslashes.is_multiple_of(2) {
+    if !is_faithful {
+        while content[end..].starts_with('\n') {
+            let body = &content[start..end];
+            let backslashes = body.len() - body.trim_end_matches('\\').len();
+            if backslashes.is_multiple_of(2) {
+                break;
+            }
             // The backslash of a `\⏎` break, and any whitespace before it.
             end = start + content[start..end - 1].trim_end().len();
         }
@@ -182,6 +185,14 @@ mod tests {
         assert_eq!((" ", "a", " "), split_edge_whitespace(" a ", true));
         assert_eq!(("", "a\\", "\n"), split_edge_whitespace("a\\\n", true));
         assert_eq!(("", "a", "\\\n"), split_edge_whitespace("a\\\n", false));
+        assert_eq!(
+            (" ", "a", "\\\n\\\n "),
+            split_edge_whitespace(" a\\\n\\\n ", false)
+        );
+        assert_eq!(
+            (" ", "a", " \\\n\\\n"),
+            split_edge_whitespace(" a \\\n\\\n", false)
+        );
         assert_eq!(("", "a\\\\", "\n"), split_edge_whitespace("a\\\\\n", false));
         assert_eq!(("\\\n", "a", ""), split_edge_whitespace("\\\na", false));
         assert_eq!(("", "a", "  \n"), split_edge_whitespace("a  \n", false));

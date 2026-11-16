@@ -210,7 +210,15 @@ fn pure_hard_breaks_move_outside() {
     );
     assert_eq!(
         "x \\\n~a~ y",
-        convert_pure_options("<p>x <sub><br>a </sub>y</p>", backslash)
+        convert_pure_options("<p>x <sub><br>a </sub>y</p>", backslash.clone())
+    );
+    // Every break at the end moves out, not just the last one.
+    let breaks = convert_pure_options("<p>x<sub> a<br><br> </sub>y</p>", backslash.clone());
+    assert_eq!("x ~a~\\\n\\\n y", breaks);
+    assert_eq!("<p>x <sub>a</sub><br />\n<br />\ny</p>\n", render(&breaks));
+    assert_eq!(
+        "x ~a~ \\\n\\\ny",
+        convert_pure_options("<p>x<sub> a <br><br></sub>y</p>", backslash)
     );
     // Faithful mode writes the tag, which is content.
     assert_eq!("x ~a<br>~ y", faithful("<p>x<sub> a<br> </sub>y</p>"));

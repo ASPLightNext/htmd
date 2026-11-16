@@ -762,32 +762,32 @@ which includes symbols such as `©`. A `~` run pairs only with a run
 of the same length, a run of two is strikethrough (or text), and a run of three
 or more is text.
 
-| Description                 | HTML in                        | Faithful expected              | Pure expected     |
-| --------------------------- | ------------------------------ | ------------------------------ | ----------------- |
-| Edge whitespace             | `x<sub>␣a␣</sub>y`             | `x␣~a~␣y`                      | `x␣~a~␣y`         |
-| Simple subscript            | `<sub>a</sub>`                 | `<sub>a</sub>`                 | `a`               |
-| Subscript between words     | `x␣<sub>i</sub>␣y`             | `x␣<sub>i</sub>␣y`             | `x␣i␣y`           |
-| Intraword subscript         | `H<sub>2</sub>O`               | `H<sub>2</sub>O`               | `H2O`             |
-| Leading whitespace only     | `H<sub>␣2</sub>O`              | `H<sub>␣2</sub>O`              | `H␣2O`            |
-| Trailing whitespace only    | `H<sub>2␣</sub>O`              | `H<sub>2␣</sub>O`              | `H2␣O`            |
-| Literal tilde               | `a~b`                          | `a\~b`                         | `a\~b`            |
-| Tilde inside subscript      | `x<sub>␣a~b␣</sub>y`           | `x␣~a\~b~␣y`                   | `x␣~a\~b~␣y`      |
-| Whitespace-only subscript   | `a<sub>␣</sub>b`               | `a<sub>␣</sub>b`               | `a␣b`             |
-| Empty subscript             | `a<sub></sub>b`                | `a<sub></sub>b`                | `ab`              |
-| Subscript with attributes   | `x<sub class="c">␣a␣</sub>y`   | `x<sub class="c">␣a␣</sub>y`   | `x␣~a~␣y`         |
-| Subscript holding emphasis  | `x<sub>␣<em>a</em>␣</sub>y`    | `x␣~*a*~␣y`                    | `x␣~*a*~␣y`       |
-| Subscript inside subscript  | `x<sub>␣<sub>a</sub>␣</sub>y`  | `x␣~<sub>a</sub>~␣y`           | `x␣~a~␣y`         |
-| Markdown inside subscript   | `x<sub>␣<sub>␣a␣</sub>␣</sub>y` | `x<sub>␣~a~␣</sub>y`          | `x␣~a~␣y`         |
-| Adjacent subscripts         | `<sub>a</sub><sub>b</sub>`     | `<sub>a</sub><sub>b</sub>`     | `ab`              |
-| Subscript with paragraphs   | `<sub><p>a</p><p>b</p></sub>`  | `<sub>⏎<p>a</p><p>b</p></sub>` | `a⏎⏎b`            |
+| Description                | HTML in                         | Faithful expected              | Pure expected |
+| -------------------------- | ------------------------------- | ------------------------------ | ------------- |
+| Edge whitespace            | `x<sub>␣a␣</sub>y`              | `x␣~a~␣y`                      | `x␣~a~␣y`     |
+| Simple subscript           | `<sub>a</sub>`                  | `<sub>a</sub>`                 | `a`           |
+| Subscript between words    | `x␣<sub>i</sub>␣y`              | `x␣<sub>i</sub>␣y`             | `x␣i␣y`       |
+| Intraword subscript        | `H<sub>2</sub>O`                | `H<sub>2</sub>O`               | `H2O`         |
+| Leading whitespace only    | `H<sub>␣2</sub>O`               | `H<sub>␣2</sub>O`              | `H␣2O`        |
+| Trailing whitespace only   | `H<sub>2␣</sub>O`               | `H<sub>2␣</sub>O`              | `H2␣O`        |
+| Literal tilde              | `a~b`                           | `a\~b`                         | `a\~b`        |
+| Tilde inside subscript     | `x<sub>␣a~b␣</sub>y`            | `x␣~a\~b~␣y`                   | `x␣~a\~b~␣y`  |
+| Whitespace-only subscript  | `a<sub>␣</sub>b`                | `a<sub>␣</sub>b`               | `a␣b`         |
+| Empty subscript            | `a<sub></sub>b`                 | `a<sub></sub>b`                | `ab`          |
+| Subscript with attributes  | `x<sub class="c">␣a␣</sub>y`    | `x<sub class="c">␣a␣</sub>y`   | `x␣~a~␣y`     |
+| Subscript holding emphasis | `x<sub>␣<em>a</em>␣</sub>y`     | `x␣~*a*~␣y`                    | `x␣~*a*~␣y`   |
+| Subscript inside subscript | `x<sub>␣<sub>a</sub>␣</sub>y`   | `x␣~<sub>a</sub>~␣y`           | `x␣~a~␣y`     |
+| Markdown inside subscript  | `x<sub>␣<sub>␣a␣</sub>␣</sub>y` | `x<sub>␣~a~␣</sub>y`           | `x␣~a~␣y`     |
+| Adjacent subscripts        | `<sub>a</sub><sub>b</sub>`      | `<sub>a</sub><sub>b</sub>`     | `ab`          |
+| Subscript with paragraphs  | `<sub><p>a</p><p>b</p></sub>`   | `<sub>⏎<p>a</p><p>b</p></sub>` | `a⏎⏎b`        |
 
 A Markdown subscript needs whitespace, punctuation, or a line edge on the outer
 side of each tilde, so it depends on the text around the element. As with
 emphasis (see "Emphasis and strong emphasis"), htmd does not examine that text.
 Where emphasis only needs content that does not start or end with punctuation
-(`*` may be intraword), a single `~` may not, so htmd writes a subscript as
-Markdown only when the content's own leading and
-trailing whitespace can be moved outside the tildes, which guarantees that the
+(`*` may be intraword), a single `~` cannot be intraword, so htmd writes a
+subscript as Markdown only when the content's own leading and trailing
+whitespace can be moved outside the tildes, which guarantees that the
 opening `~` follows whitespace and the closing `~` precedes it, whatever the
 element's neighbors are. Every other subscript is serialized in Faithful mode
 and written as its content in Pure mode, as the table shows.
@@ -796,9 +796,12 @@ Every `~` in a run of one or two in a text node outside a code span, code block,
 math, or autolink, and in an image's `alt` text, is escaped as `\~`, which
 pulldown-cmark honors inside a subscript, so a literal tilde can neither open
 nor close a subscript or strikethrough: `<sub>␣a~~b␣</sub>` is written
-`␣~a\~\~b~␣`. Runs of three or more are text, and every `~` is escaped at a
-text-node start and inside subscript content; escaping only the first can
-expose a `~~` strikethrough delimiter.
+`␣~a\~\~b~␣`. Runs of three or more are text. In a text node, every `~` of
+such a run is escaped where the run starts the text node (after spaces at
+most) and inside subscript content; escaping only the first can expose a `~~`
+strikethrough delimiter. In `alt` text such runs are left as they are: a run
+of three or more pairs with no `~` or `~~`, so it can neither open nor close a
+subscript or strikethrough.
 
 Approach:
 
@@ -806,23 +809,25 @@ Approach:
    the tildes of their text nodes as described above. The result is the
    content.
 2. Split the content into its leading whitespace, the remaining content, and
-   its trailing whitespace, with whitespace as defined above. In Pure mode a
-   hard break at either end counts as whitespace: a closing `~` cannot start a
-   line, and with `BrStyle::TwoSpaces` an opening `~` would precede whitespace.
+   its trailing whitespace, with whitespace as defined above. In Pure mode every
+   hard break at either end counts as whitespace: with `BrStyle::Backslash`,
+   trimming only the line ending of a trailing `\⏎` break would leave its
+   backslash before the closing `~`, escaping it.
 3. The subscript can be written as Markdown only if all of these hold:
    1. The remaining content is not empty: `~~` is not an empty subscript.
    2. Both the leading and the trailing whitespace are non-empty.
-   3. The remaining content holds no unescaped `~`, which only another handler
-      can write (for example a `<del>` written as `~~b~~`). A `~` at either
-      edge would merge with a delimiter into `~~`, which reads as
-      strikethrough, and an unmatched `~~` run inside stops the closing `~`
-      from matching.
+   3. The remaining content holds no unescaped `~`. Text nodes never leave
+      one, but another handler can (for example a `<del>` written as
+      `~~b~~`), as can a code span, math, or autolink inside the content,
+      whose tildes are not escaped. A `~` at either edge would merge with a
+      delimiter into `~~`, which reads as strikethrough, and an unmatched `~~`
+      run inside that can close stops the closing `~` from matching.
 
 In `TranslationMode::Faithful`:
 
 1. If the element is in a block context and has a descendant `<pre>` or a
-   descendant with a CommonMark type-6 name, serialize the enclosing `<sub>` as
-   an HTML block, with a newline after its opening tag so it opens a type-7
+   descendant with a CommonMark type-6 name, serialize the element as an HTML
+   block, with a newline after its opening tag so it opens a type-7
    block; apply the existing blank-line encoding rules.
 2. Otherwise, if the element has attributes, serialize the entire element as
    HTML, as for emphasis.
@@ -842,10 +847,11 @@ In `TranslationMode::Pure`, which writes no HTML:
 
 1. If the element has a descendant `<pre>` or a descendant with a CommonMark
    type-6 name, omit its delimiters and translate its children in the incoming
-   context. At the document root, `<sub><p>a</p><p>b</p></sub>` becomes
-   `a⏎⏎b`.
-2. Otherwise, drop the element's attributes, as for emphasis.
-3. Otherwise, if step 3 above allows Markdown, move the leading and trailing
+   context; in an inline context, trim the result's leading and trailing
+   newlines, as for a `<span>`. At the document root,
+   `<sub><p>a</p><p>b</p></sub>` becomes `a⏎⏎b`.
+2. Otherwise, drop the element's attributes, as for emphasis, and continue.
+3. If step 3 above allows Markdown, move the leading and trailing
    whitespace outside the remaining content and surround that content with `~`.
 4. Otherwise, write the content, including its leading and trailing whitespace,
    without tildes.
