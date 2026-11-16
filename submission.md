@@ -508,7 +508,7 @@ The harness used `Parser::new_ext(markdown, Options::ENABLE_SUBSCRIPT | Options:
 
 I recommend replacing steps 4–5 with the following. This makes the characters under inspection, fallback behavior, and mode difference explicit while leaving the other existing decisions intact:
 
-> 4. For a Markdown candidate, trim leading and trailing whitespace from the translated content and place those characters immediately outside the would-be `~content~` pair.
+> 4. For a Markdown candidate, move the leading whitespace of the translated content to just before the opening `~`, and the trailing whitespace to just after the closing `~`.
 > 5. Test that candidate against the complete prospective Markdown output for the current mode. Inspect the emitted characters immediately adjacent to each tilde, including the first and last emitted characters of the content and output from neighboring elements; do not use adjacent characters from the input HTML. Apply the single-tilde flanking rules above, and retain the fallback when an unescaped `~` or `\` is immediately outside the pair. If either delimiter is invalid, Faithful mode serializes the original `<sub>` element as HTML, preserving its original edge whitespace; Pure mode emits the relocated edge whitespace and the trimmed content without tildes. A letter immediately before the opening tilde or after the closing tilde blocks that delimiter, and a neighboring tilde merges with it: `~a~~b~` reads as text. A neighbor can come from any element, including a `<span>` whose emitted Markdown differs by mode.
 
 Three useful additions to the existing table:
