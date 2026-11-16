@@ -3,3 +3,4 @@ output_*.md
 *.svg
 *.log
 *.estimates.json
+.idea/workspace.xml
