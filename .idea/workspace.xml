@@ -4,7 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="d2cb0bbc-cf87-4097-9256-9b69b2795968" name="Changes" comment="" />
+    <list default="true" id="d2cb0bbc-cf87-4097-9256-9b69b2795968" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/submission.md" beforeDir="false" afterPath="$PROJECT_DIR$/submission.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/translation_approach.md" beforeDir="false" afterPath="$PROJECT_DIR$/translation_approach.md" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -14,9 +18,6 @@
     <persistenceIdMap>
       <entry key="_/Users/kaspi/htmd" value="3Ls3RjxBBkCccIUfA4o7GarRKdN" />
     </persistenceIdMap>
-  </component>
-  <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="73" />
   </component>
   <component name="Git.Settings">
     <option name="RECENT_BRANCH_BY_REPOSITORY">
@@ -32,61 +33,61 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.3623706459120777" />
-      <entry key="MS500" value="3.1824277091779933" />
-      <entry key="S2" value="4.922711107810893" />
-      <entry key="S5" value="5.522918920526403" />
-      <entry key="S10" value="5.752882327811228" />
-      <entry key="S30" value="5.915630912908762" />
-      <entry key="S60" value="5.9575599996817" />
-      <entry key="M2" value="5.978716248347664" />
-      <entry key="M5" value="6.014023717839398" />
-      <entry key="M10" value="6.80580610268439" />
-      <entry key="M15" value="8.687835222279855" />
-      <entry key="M30" value="14.967050378113004" />
-      <entry key="H1" value="22.39481094364545" />
-      <entry key="H2" value="28.175197862754352" />
-      <entry key="H4" value="31.791859667153947" />
-      <entry key="D1" value="35.25363582170933" />
-      <entry key="W1" value="35.89221909481994" />
+      <entry key="MS100" value="1.3524918691937082" />
+      <entry key="MS500" value="3.4714549904965764" />
+      <entry key="S2" value="5.145733129984187" />
+      <entry key="S5" value="5.647972862547673" />
+      <entry key="S10" value="6.113167625904972" />
+      <entry key="S30" value="9.360144771571202" />
+      <entry key="S60" value="14.32178563086558" />
+      <entry key="M2" value="20.88095706849971" />
+      <entry key="M5" value="28.332718559654296" />
+      <entry key="M10" value="32.45209663293386" />
+      <entry key="M15" value="35.42770058564487" />
+      <entry key="M30" value="42.81983079620034" />
+      <entry key="H1" value="51.022760259612134" />
+      <entry key="H2" value="57.37305102783304" />
+      <entry key="H4" value="61.35438482564847" />
+      <entry key="D1" value="65.17490569711666" />
+      <entry key="W1" value="65.88081845871655" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
       <entry key="MS500" value="0.0" />
       <entry key="S2" value="0.0" />
-      <entry key="S5" value="5.3356242809115365E-180" />
-      <entry key="S10" value="2.309897028205269E-90" />
-      <entry key="S30" value="1.3218967658416356E-30" />
-      <entry key="S60" value="1.1497376943640821E-15" />
-      <entry key="M2" value="3.3907782209458666E-8" />
-      <entry key="M5" value="0.0010282998063168114" />
-      <entry key="M10" value="0.0320671140939875" />
-      <entry key="M15" value="0.1009345655410074" />
-      <entry key="M30" value="0.31770200745511107" />
-      <entry key="H1" value="0.5636506076064418" />
-      <entry key="H2" value="0.7507666798722767" />
-      <entry key="H4" value="0.8664679335510789" />
-      <entry key="D1" value="0.9763947055509824" />
-      <entry key="W1" value="0.9965931931096678" />
+      <entry key="S5" value="4.86214938118487E-192" />
+      <entry key="S10" value="2.2050282041699283E-96" />
+      <entry key="S30" value="1.3015815473717629E-32" />
+      <entry key="S60" value="1.1408687686897913E-16" />
+      <entry key="M2" value="1.0681145859362615E-8" />
+      <entry key="M5" value="6.478092400520345E-4" />
+      <entry key="M10" value="0.025452096967677033" />
+      <entry key="M15" value="0.0865264819204634" />
+      <entry key="M30" value="0.2941538405672504" />
+      <entry key="H1" value="0.5423595122861318" />
+      <entry key="H2" value="0.7364506176833118" />
+      <entry key="H4" value="0.858167010367628" />
+      <entry key="D1" value="0.9748294387105281" />
+      <entry key="W1" value="0.9963648008296581" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="1.3398119517823803" />
-      <entry key="MS500" value="3.16821388281537" />
-      <entry key="S2" value="4.91667191813209" />
-      <entry key="S5" value="5.520151175086651" />
-      <entry key="S10" value="5.75143057821039" />
-      <entry key="S30" value="5.915130941194871" />
-      <entry key="S60" value="5.9573079429408144" />
-      <entry key="M2" value="5.978589730820475" />
-      <entry key="M5" value="6.014996132351282" />
-      <entry key="M10" value="6.837766929381997" />
-      <entry key="M15" value="8.788582449678941" />
-      <entry key="M30" value="15.284474582066602" />
-      <entry key="H1" value="22.958217842419433" />
-      <entry key="H2" value="28.925802746560603" />
-      <entry key="H4" value="32.65823434192558" />
-      <entry key="D1" value="36.23001302561809" />
-      <entry key="W1" value="36.8888097362687" />
+      <entry key="MS100" value="1.3142362123811095" />
+      <entry key="MS500" value="3.4517644858592504" />
+      <entry key="S2" value="5.138352134207857" />
+      <entry key="S5" value="5.644720118547858" />
+      <entry key="S10" value="6.111407239765915" />
+      <entry key="S30" value="9.35923447351598" />
+      <entry key="S60" value="14.321069607582434" />
+      <entry key="M2" value="20.880424314207023" />
+      <entry key="M5" value="28.33307067363476" />
+      <entry key="M10" value="32.47731969124209" />
+      <entry key="M15" value="35.51396644062468" />
+      <entry key="M30" value="43.11367551578648" />
+      <entry key="H1" value="51.56485882096952" />
+      <entry key="H2" value="58.109329584682165" />
+      <entry key="H4" value="62.21245276382343" />
+      <entry key="D1" value="66.14971653998069" />
+      <entry key="W1" value="66.87718054803756" />
     </decayedShown>
   </component>
   <component name="ProjectColorInfo">{
@@ -94,33 +95,61 @@
   &quot;fromUser&quot;: false
 }</component>
   <component name="ProjectId" id="3Ls3RjNWj0TBWLHPcwbfmXjvDqF" />
+  <component name="ProjectSessionTemplates">
+    <option name="panelTemplate">
+      <template>
+        <option name="modeId" value="Agent" />
+        <option name="model">
+          <model>
+            <option name="modelType" value="builtin_id" />
+            <option name="modelValue" value="auto" />
+          </model>
+        </option>
+        <option name="targetType" value="BACKGROUND" />
+        <option name="worktreeMode" value="WORKSPACE" />
+      </template>
+    </option>
+  </component>
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RunOnceActivity.MCP Project settings loaded": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
-    "codeWithMe.voiceChat.enabledByDefault": "false",
-    "copilot.chat.legacySessionMetadata.migrated": "true",
-    "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "/Users/kaspi/htmd",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "bun"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
+    &quot;copilot.chat.legacySessionMetadata.migrated&quot;: &quot;true&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/Users/kaspi/htmd&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;bun&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$" />
     </key>
+  </component>
+  <component name="RunManager">
+    <configuration default="true" type="JetRunConfigurationType">
+      <module name="htmd" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration default="true" type="KotlinStandaloneScriptRunConfigurationType">
+      <module name="htmd" />
+      <option name="filePath" />
+      <method v="2" />
+    </configuration>
   </component>
   <component name="SharedIndexes">
     <attachedChunks>

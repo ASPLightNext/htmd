@@ -762,78 +762,96 @@ which includes symbols such as `©`. A `~` run pairs only with a run
 of the same length, a run of two is strikethrough (or text), and a run of three
 or more is text.
 
-| Description                 | HTML in                    | Faithful expected          |
-| --------------------------- | -------------------------- | -------------------------- |
-| Simple subscript            | `<sub>a</sub>`             | `~a~`                      |
-| Subscript between words     | `x <sub>i</sub> y`         | `x ~i~ y`                  |
-| Intraword subscript         | `H<sub>2</sub>O`           | `H<sub>2</sub>O`           |
-| Literal tilde               | `a~b`                      | `a\~b`                     |
-| Tilde inside subscript      | `<sub>a~b</sub>`           | `~a\~b~`                   |
-| Interior whitespace         | `x<sub>␣a␣</sub>y`         | `x␣~a~␣y`                  |
-| Whitespace-only subscript   | `a<sub>␣</sub>b`           | `a<sub>␣</sub>b`           |
-| Empty subscript             | `a<sub></sub>b`            | `a<sub></sub>b`            |
-| Subscript with attributes   | `<sub class="x">a</sub>`   | `<sub class="x">a</sub>`   |
-| Subscript holding emphasis  | `<sub><em>a</em></sub>`    | `~*a*~`                    |
-| Subscript inside subscript  | `<sub><sub>a</sub></sub>`  | `~<sub>a</sub>~`           |
-| Adjacent subscripts         | `<sub>a</sub><sub>b</sub>` | `<sub>a</sub><sub>b</sub>` |
-| Leading space; closing tilde blocked | `H<sub>␣2</sub>O` | `H<sub>␣2</sub>O` |
-| Trailing space; opening tilde blocked | `H<sub>2␣</sub>O` | `H<sub>2␣</sub>O` |
-| Span changes the emitted neighbor by mode | `(<sub>i</sub><span>O</span>)` | `(~i~<span>O</span>)` |
-| Adjacent subscripts with emphasis | `<sub><em>a</em></sub><sub>b</sub>` | `<sub>*a*</sub><sub>b</sub>` |
-| Subscript with paragraphs | `<sub><p>a</p><p>b</p></sub>` | `<sub>⏎<p>a</p><p>b</p></sub>` |
+| Description                 | HTML in                        | Faithful expected              | Pure expected     |
+| --------------------------- | ------------------------------ | ------------------------------ | ----------------- |
+| Edge whitespace             | `x<sub>␣a␣</sub>y`             | `x␣~a~␣y`                      | `x␣~a~␣y`         |
+| Simple subscript            | `<sub>a</sub>`                 | `<sub>a</sub>`                 | `a`               |
+| Subscript between words     | `x␣<sub>i</sub>␣y`             | `x␣<sub>i</sub>␣y`             | `x␣i␣y`           |
+| Intraword subscript         | `H<sub>2</sub>O`               | `H<sub>2</sub>O`               | `H2O`             |
+| Leading whitespace only     | `H<sub>␣2</sub>O`              | `H<sub>␣2</sub>O`              | `H␣2O`            |
+| Trailing whitespace only    | `H<sub>2␣</sub>O`              | `H<sub>2␣</sub>O`              | `H2␣O`            |
+| Literal tilde               | `a~b`                          | `a\~b`                         | `a\~b`            |
+| Tilde inside subscript      | `x<sub>␣a~b␣</sub>y`           | `x␣~a\~b~␣y`                   | `x␣~a\~b~␣y`      |
+| Whitespace-only subscript   | `a<sub>␣</sub>b`               | `a<sub>␣</sub>b`               | `a␣b`             |
+| Empty subscript             | `a<sub></sub>b`                | `a<sub></sub>b`                | `ab`              |
+| Subscript with attributes   | `x<sub class="c">␣a␣</sub>y`   | `x<sub class="c">␣a␣</sub>y`   | `x␣~a~␣y`         |
+| Subscript holding emphasis  | `x<sub>␣<em>a</em>␣</sub>y`    | `x␣~*a*~␣y`                    | `x␣~*a*~␣y`       |
+| Subscript inside subscript  | `x<sub>␣<sub>a</sub>␣</sub>y`  | `x␣~<sub>a</sub>~␣y`           | `x␣~a~␣y`         |
+| Adjacent subscripts         | `<sub>a</sub><sub>b</sub>`     | `<sub>a</sub><sub>b</sub>`     | `ab`              |
+| Subscript with paragraphs   | `<sub><p>a</p><p>b</p></sub>`  | `<sub>⏎<p>a</p><p>b</p></sub>` | `a⏎⏎b`            |
 
-Approach:
-
-1. In Faithful mode, if the element is in a block context and has a descendant
-   `<pre>` or a descendant with a CommonMark type-6 name, serialize the
-   enclosing `<sub>` as an HTML block, with a newline after its opening tag so
-   it opens a type-7 block; apply the existing blank-line encoding rules.
-   Otherwise, if the element has attributes, or is inside another `<sub>`,
-   serialize it as HTML; in `~a.~.b~ c~`, the inner opener closes the outer
-   subscript.
-2. If the content is empty once its leading and trailing whitespace (as defined
-   above) is removed, serialize the element as HTML: `~~` is not an empty
-   subscript.
-3. If the trimmed content contains an unescaped `~`, serialize the element as
-   HTML: `~~a~~` reads as strikethrough, and an unmatched `~~` run inside the
-   content, such as one left by another handler, stops the closing `~` from
-   matching.
-4. To form a Markdown candidate, trim leading and trailing whitespace from
-   the translated content and place that whitespace outside the proposed
-   `~content~` pair.
-5. Apply the single-tilde rules above to the candidate after step 4, using
-   the characters that would be emitted in the current mode. Check the
-   characters immediately inside and outside both tildes. The outside
-   characters can come from neighboring elements, including a `<span>` that
-   emits HTML in Faithful mode but passes through its text in Pure mode.
-   Reject the candidate if either delimiter cannot open or close, or if
-   either outside neighbor is an unescaped `~` or `\`. In Faithful mode,
-   serialize the `<sub>` element as HTML without moving its edge whitespace
-   outside the element. In Pure mode, emit the trimmed content with its
-   leading and trailing whitespace, without tildes.
-6. Otherwise, surround the content with `~`.
+A Markdown subscript needs whitespace, punctuation, or a line edge on the outer
+side of each tilde, so it depends on the text around the element. As with
+emphasis (see "Emphasis and strong emphasis"), htmd does not examine that text.
+It writes a subscript as Markdown only when the content's own leading and
+trailing whitespace can be moved outside the tildes, which guarantees that the
+opening `~` follows whitespace and the closing `~` precedes it, whatever the
+element's neighbors are. Every other subscript is serialized in Faithful mode
+and written as its content in Pure mode, as the table shows.
 
 Every `~` in a run of one or two in a text node outside a code span, code block,
 math, or autolink, and in an image's `alt` text, is escaped as `\~`, which
 pulldown-cmark honors inside a subscript, so a literal tilde can neither open
-nor close a subscript or strikethrough: `<sub>a~~b</sub>` is written `~a\~\~b~`.
-Runs of three or more are text, and every `~` is escaped at a text-node start
-and inside subscript content; escaping only the first can expose a `~~`
-strikethrough delimiter. When the reader also enables superscript, a `^` in the
-content is escaped as `\^`; otherwise `~a^ b~` reads as text. Adjacent
-subscripts are immediately adjacent `<sub>` siblings, regardless of attributes
-or children. Faithful mode serializes each separately; in Pure mode eligible
-siblings are combined, so `<sub>a</sub><sub>b</sub>` is written `~ab~`.
+nor close a subscript or strikethrough: `<sub>␣a~~b␣</sub>` is written
+`␣~a\~\~b~␣`. Runs of three or more are text, and every `~` is escaped at a
+text-node start and inside subscript content; escaping only the first can
+expose a `~~` strikethrough delimiter.
 
-In `TranslationMode::Pure`, which writes no HTML, attributes are dropped, empty
-and whitespace-only subscripts leave only their whitespace, and a subscript
-inside a subscript, or one which steps 3 or 5 would serialize, is written as its
-content alone. A subscript with a block descendant takes precedence over
-combining: omit its delimiters and translate its children in the incoming
-context; it never joins a combined run. At the document root,
-`<sub><p>a</p><p>b</p></sub>` becomes `a⏎⏎b`, while
-`<sub><p>a</p></sub><sub>b</sub>` becomes `a⏎⏎~b~`. Eligible adjacent
-subscripts are combined, then checked by steps 3 and 5 as one subscript. A hard
-break at either end of the content is moved outside with the whitespace: a
-closing `~` cannot start a line, and with `BrStyle::TwoSpaces` an opening `~`
-would precede whitespace. If nothing is left, the subscript is dropped.
+Approach:
+
+1. Translate the element's children to Markdown in an inline context, escaping
+   the tildes of their text nodes as described above. The result is the
+   content.
+2. Split the content into its leading whitespace, the remaining content, and
+   its trailing whitespace, with whitespace as defined above. In Pure mode a
+   hard break at either end counts as whitespace: a closing `~` cannot start a
+   line, and with `BrStyle::TwoSpaces` an opening `~` would precede whitespace.
+3. The subscript can be written as Markdown only if all of these hold:
+   1. The remaining content is not empty: `~~` is not an empty subscript.
+   2. Both the leading and the trailing whitespace are non-empty.
+   3. The remaining content holds no unescaped `~`, which only another handler
+      can write (for example a `<del>` written as `~~b~~`). A `~` at either
+      edge would merge with a delimiter into `~~`, which reads as
+      strikethrough, and an unmatched `~~` run inside stops the closing `~`
+      from matching.
+
+In `TranslationMode::Faithful`:
+
+1. If the element is in a block context and has a descendant `<pre>` or a
+   descendant with a CommonMark type-6 name, serialize the enclosing `<sub>` as
+   an HTML block, with a newline after its opening tag so it opens a type-7
+   block; apply the existing blank-line encoding rules.
+2. Otherwise, if the element has attributes or is inside another `<sub>`,
+   serialize the entire element as HTML, as for emphasis inside emphasis.
+3. Otherwise, if step 3 above allows Markdown, move the leading and trailing
+   whitespace outside the remaining content and surround that content with `~`.
+4. Otherwise, write `<sub>`, the content with its edge whitespace, and
+   `</sub>`.
+
+In `TranslationMode::Pure`, which writes no HTML:
+
+1. If the element has a descendant `<pre>` or a descendant with a CommonMark
+   type-6 name, omit its delimiters and translate its children in the incoming
+   context. At the document root, `<sub><p>a</p><p>b</p></sub>` becomes
+   `a⏎⏎b`.
+2. Otherwise, drop the element's attributes. If it is inside another `<sub>`,
+   write its content alone.
+3. Otherwise, if step 3 above allows Markdown, move the leading and trailing
+   whitespace outside the remaining content and surround that content with `~`.
+4. Otherwise, write the content, including its leading and trailing whitespace,
+   without tildes.
+
+Adjacent subscripts are an adjacent-element run, as described in the emphasis
+section: Faithful mode serializes each element of the run, and Pure mode
+combines it into one subscript, which the steps above then translate.
+
+The following is not implemented; it requires the ability to examine text
+preceding and following the subscript. It is kept for possible future
+improvements.
+
+> Apply the single-tilde rules above to the candidate `~content~`, after its
+> edge whitespace is moved outside, using the characters that would be emitted
+> around it in the current mode. Reject the candidate if either delimiter
+> cannot open or close, or if either outside neighbor is an unescaped `~` or
+> `\`. This would write `x␣<sub>i</sub>␣y` as `x␣~i~␣y`, while
+> `H<sub>2</sub>O` would still be serialized.

@@ -4,11 +4,7 @@ use std::{borrow::Cow, rc::Rc};
 
 use crate::{
     Context, Element,
-    element_handler::{
-        ElementHandlers,
-        element_util::serialize_element,
-        sub::{combine_run, in_subscript, is_combinable_sub},
-    },
+    element_handler::{ElementHandlers, element_util::serialize_element, sub::in_subscript},
 };
 
 use super::{
@@ -195,13 +191,13 @@ fn is_markdown_block_start(byte: u8) -> bool {
 /// The bytes which carry CommonMark meaning wherever in a text node they
 /// appear, and so are escaped one by one. A `&` could begin an
 /// [entity or numeric character reference](https://spec.commonmark.org/0.31.2/#entity-and-numeric-character-references),
-/// a `$` a math expression, a `~` a subscript or strikethrough, and, inside a
-/// subscript, a `^` a superscript; see the math and subscript sections of
+/// a `$` a math expression, and a `~` a subscript or strikethrough; see the
+/// math and subscript sections of
 /// `translation_approach.md`.
 fn is_markdown_inline_special(byte: u8) -> bool {
     matches!(
         byte,
-        b'\\' | b'&' | b'*' | b'_' | b'`' | b'[' | b']' | b'$' | b'~' | b'^'
+        b'\\' | b'&' | b'*' | b'_' | b'`' | b'[' | b']' | b'$' | b'~'
     )
 }
 
@@ -225,31 +221,13 @@ pub(crate) fn walk_children(
     let mut index = 0;
     while index < children.len() {
         let mut run_end = index + 1;
-        // Pure mode writes a run of adjacent `<sub>` siblings as one subscript,
-        // whatever their attributes or children, except one holding a block,
-        // which stays apart; faithful mode leaves each to its handler, which
-        // serializes it. See the "Subscript" section of
-        // `translation_approach.md`.
-        let is_sub_run = handlers.options.translation_mode == TranslationMode::Pure
-            && is_combinable_sub(&children[index]);
-        if is_sub_run {
-            while run_end < children.len() && is_combinable_sub(&children[run_end]) {
-                run_end += 1;
-            }
-        } else {
-            while run_end < children.len()
-                && can_combine(&children[run_end - 1], &children[run_end])
-            {
-                run_end += 1;
-            }
+        while run_end < children.len() && can_combine(&children[run_end - 1], &children[run_end]) {
+            run_end += 1;
         }
 
         let combined;
         let child = if run_end - index == 1 {
             &children[index]
-        } else if is_sub_run {
-            combined = combine_run(node, &children[index..run_end]);
-            &combined
         } else if handlers.options.translation_mode == TranslationMode::Pure {
             combined = combine_nodes(node, &children[index..run_end]);
             &combined
@@ -325,8 +303,7 @@ fn can_combine(n1: &Node, n2: &Node) -> bool {
 
     // Only combine inline content; block content (for example, one paragraph
     // following another) repetition is expected and should not be combined.
-    // Adjacent subscripts follow their own rule; see `walk_children`.
-    if is_block_element(&name1.local) || *name1.local == *"sub" {
+    if is_block_element(&name1.local) {
         return false;
     }
 
@@ -542,12 +519,6 @@ fn escape_if_needed(text: Cow<'_, str>) -> Cow<'_, str> {
             '[' => escaped.push_str("\\["),
             ']' => escaped.push_str("\\]"),
             '$' => escaped.push_str("\\$"),
-            // A reader which enables superscript reads a `^` in a subscript's
-            // content as a delimiter, which can stop the closing `~` from
-            // matching: `~a^ b~` is text. `\^` is an ordinary CommonMark escape,
-            // so it reads as `^` whether or not that reader enables
-            // superscript, and htmd needs no option naming the reader's.
-            '^' if in_subscript() => escaped.push_str("\\^"),
             _ => escaped.push(ch),
         }
     }

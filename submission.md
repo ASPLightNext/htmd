@@ -23,6 +23,8 @@ upstream `2e7bf3a`).
 2. Output of "Verify that you can compile and run the project in the current git repo."
 ----------------------------------------------------------------------------------------
 
+#### Khamzin Daulet
+
 Prompting Claude Sonnet 5.5 (`claude-sonnet-5-5`), high effort, with `Verify
 that you can compile and run the project in the current git repo.` produced:
 
@@ -119,8 +121,8 @@ Output:
 | 5     | 5        | `\~~~` leaves a live `~~` that blocks the closing `~`; Pure combines adjacent subscripts (`~ab~`); "Unicode whitespace" renamed to the `char::is_whitespace` set; hard-break reason depends on `BrStyle`; a backslash neighbor escapes the opener |
 | 6     | 4        | Findings in part 4, all applied                                                                                                                                                                                                                                         |
 | 7     | 2        | Step 5 now says it needs the emitted Markdown around the element, unlike the emphasis section; step 3's reason corrected (an unmatched `~~` run, not a balanced strikethrough, blocks the closing `~`)                                                                  |
-
-| 8 | 3 | Clarified which emitted characters determine subscript validity, specified where edge whitespace stays on fallback, and added three boundary examples. |
+| 8     | 3        | Clarified which emitted characters determine subscript validity, specified where edge whitespace stays on fallback, and added three boundary examples.                                                                                                                  |
+| 9     | 1        | Step 3 now checks the content after text-node tildes are escaped, so it no longer contradicts the `<sub>a~b</sub>` → `~a\~b~` row; only an unescaped `~` written by another handler forces the HTML fallback.                                                           |
 
 4. Round 6 review
 -----------------
@@ -274,15 +276,18 @@ Prompt:
 > list briefly what you checked and found correct.
 
 The output below is the reviewer's report, unedited apart from the shortened
-scratch path. No finding is struck out, because none has been shown to be
-wrong, but neither is fully confirmed. Finding 1 is confirmed by reading the
-spec: the emphasis section does say that examining the text before and after
-an element is not implemented. Finding 2 has not been reproduced with
-pulldown-cmark 0.13.4, because no Rust toolchain was available for this round,
-but its reasoning from the source is consistent with the part 4 findings. Both
-findings were then applied to the spec with small edits: step 3 now says an
-unmatched `~~` run blocks the closing `~`, and step 5 now says it needs the
-emitted Markdown around the element, unlike the emphasis section.
+scratch path. No finding is struck out, because both were confirmed. Finding 1
+is confirmed by reading the spec: the emphasis section does say that examining
+the text before and after an element is not implemented. Finding 2 is
+confirmed by running pulldown-cmark 0.13.4 in Rust (rustc 1.99.1, with
+`ENABLE_SUBSCRIPT | ENABLE_STRIKETHROUGH`): `~a ~~b~~ c~` renders
+`<sub>a <del>b</del> c</sub>`, so a balanced `~~` does not block the closing
+`~`, while `~a b~~ c~` stays text, because an unmatched `~~` does. `~a\~b~`
+and `~a\~\~b~` render as subscripts containing `~` and `~~`, which confirms
+that escaped tildes are safe inside one. Both findings were then applied to
+the spec with small edits: step 3 now says an unmatched `~~` run blocks the
+closing `~`, and step 5 now says it needs the emitted Markdown around the
+element, unlike the emphasis section.
 
 Output:
 
