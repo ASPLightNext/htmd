@@ -4,3 +4,4 @@ output_*.md
 *.log
 *.estimates.json
 .idea/workspace.xml
+.review-ref/

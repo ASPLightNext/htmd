@@ -18,12 +18,18 @@ upstream `2e7bf3a`).
 * Khamzin Daulet: Verified that the project builds and passes the CI checks
   (`cargo build`, `cargo clippy`, `cargo test`) on the branch, recorded the
   output below, and ran review round 7 of the Subscript section (part 5).
-* Dustin Johnson: Verified the Windows build and tested subscript boundary cases with pulldown-cmark 0.13.4, then clarified the specification’s whitespace and fallback rules. The original round 8 proposed three example rows; its rerun (part 6) found that none were needed.
+* Dustin Johnson: Verified the Windows build and tested subscript boundary cases with pulldown-cmark 0.13.4, then clarified the specification’s whitespace and fallback rules. The original round 8 proposed three example rows; a later rerun recorded in part 6, whose runner is not recorded, found that none were needed.
 
 2. Output of "Verify that you can compile and run the project in the current git repo."
 ----------------------------------------------------------------------------------------
 
 #### Khamzin Daulet
+
+Record note: the output below was added in commit `f371119` (git author
+ar_matzhan). It replaced the output Daulet Khamzin committed in `092b833`,
+which that commit records as a Claude Sonnet 5.5 (high effort) run on HEAD
+`c98556c`; that text remains in the repository history. Who ran the output
+below, and at what effort, is not recorded.
 
 Prompting claude-opus-5-5 through the Kasper CLI agent with `Verify that you
 can compile and run the project in the current git repo.` produced:
@@ -122,9 +128,11 @@ Output:
 | 4     | 6        | `~a~~b~` actually reads as text (the round 3 reviewer was wrong; verified); runs of two escaped too (`<sub>a~~b</sub>`, strikethrough); code fence at line start; `^` escaped when superscript is also enabled                                     |
 | 5     | 5        | `\~~~` leaves a live `~~` that blocks the closing `~`; Pure combines adjacent subscripts (`~ab~`); "Unicode whitespace" renamed to the `char::is_whitespace` set; hard-break reason depends on `BrStyle`; a backslash neighbor escapes the opener |
 | 6     | 4        | Findings in part 4, all applied                                                                                                                                                                                                                                         |
-| 7     | 5        | Findings in part 5 (Opus rerun on the current section); 1, 2, 4 and 5 applied, 3 not (it changes no output)                                                                                                                                                                                                |
-| 8     | 0        | Rerun against the whitespace-only rule: every case behaves as specified with no neighbor inspection; the emitted-neighbor proposal was moved to a not-implemented note.                                                                                                |
-| 9     | 1        | Step 3 now checks the content after text-node tildes are escaped, so it no longer contradicts the `x<sub>␣a~b␣</sub>y` → `x␣~a\~b~␣y` row; only an unescaped `~` (from another handler, or a code span, math, or autolink) forces the fallback.                                                           |
+| 7 (original) | 2 | Step 5 now says it needs the emitted Markdown around the element, unlike the emphasis section; step 3's reason corrected (an unmatched `~~` run, not a balanced strikethrough, blocks the closing `~`). Claude Sonnet 5.5 run committed in `092b833`; part 5 now holds the rerun that replaced its transcript. |
+| 7 (rerun) | 5 | Findings in part 5 (Opus rerun on the current section); 1, 2, 4 and 5 applied, 3 not (it changes no output) |
+| 8 (original) | 3 | Clarified which emitted characters determine subscript validity, specified where edge whitespace stays on fallback, and added three boundary examples. Dustin Johnson's run, committed in `a31bed2`; part 6 now holds the rerun that replaced its output. |
+| 8 (rerun) | 0 | Rerun against the whitespace-only rule: every case behaves as specified with no neighbor inspection; the emitted-neighbor proposal was moved to a not-implemented note. |
+| 9     | 1        | Step 3 now checks the content after text-node tildes are escaped, so it no longer contradicts the `x<sub>␣a~b␣</sub>y` → `x␣~a\~b~␣y` row; only an unescaped `~` (from another handler, or a code span, math, or autolink) forces the fallback. No transcript of this round is recorded in this file. |
 
 4. Round 6 review
 -----------------
@@ -234,6 +242,12 @@ following output. This round replaces an earlier round 7 run with Claude Sonnet
 `subscript-htmd` (HEAD `ebd8de4`, with uncommitted changes), so it postdates the
 changes recorded in rounds 8 and 9. The sub-agent's effort level was not set
 separately.
+
+Record note: this transcript was added in commit `f371119` (git author
+ar_matzhan). The round 7 run it replaced was committed by Daulet Khamzin in
+`092b833`, which records it as a Claude Sonnet 5.5 run on `c98556c` with two
+findings; that transcript remains in the repository history. Who ran the rerun
+below is not recorded.
 
 The system prompt is the one in part 4. The prompt keeps the task of part 4,
 with three changes: it names `translation_approach.md` by path and points to
@@ -371,7 +385,7 @@ Output:
 > * I could not open the crate under `~/.cargo` (outside the workspace) and
 >   used the `.review-ref` copies throughout.
 
-## 6. Last review (round 8) — Dustin Johnson
+## 6. Review round 8 — prompt by Dustin Johnson, output from a later rerun
 
 **Tool:** VS Code AI chat, Agent mode
 
@@ -461,6 +475,13 @@ which changes to make.
 
 ### Review output
 
+Record note: the output below is a rerun added in commit `f371119` (git
+author ar_matzhan). Who ran it, and with which tool, model, and effort, is not
+recorded; the Tool and Model lines above describe Dustin Johnson's original
+run. That original output, which reported three actionable findings against
+the draft specification before htmd implemented subscripts, was committed in
+`a31bed2` and remains in the repository history.
+
 #### 1. Rule established
 
 With `ENABLE_SUBSCRIPT` enabled, a single `~` opens a subscript when it is followed by a non-whitespace character and preceded by the start of the line, whitespace, or punctuation. It closes one when preceded by a non-whitespace character and followed by whitespace, punctuation, or the end of the line. The parser checks the characters of the emitted Markdown, not those of the input HTML.
@@ -507,18 +528,20 @@ GitHub userid: `drj228`
 
 #### Contributions
 
-Finalized the Subscript specification through two review rounds, used Claude to implement the feature and regression tests, addressed implementation findings across four review rounds, and verified formatting, build, Clippy, and all tests on Windows.
+Finalized the Subscript specification at `a5326db`, used Claude to implement the feature and regression tests committed as `49f3b7d` and to perform implementation review rounds 2–4, requested fresh reviews of the team's replacement at `4cb0627`, and verified both implementations on Windows.
 
 #### Specification review rounds
 
-These rounds cover only the final submission; draft review rounds are recorded above.
+These rounds cover only the final submission; draft review rounds are recorded above. Round 1 reviewed the Subscript section at `a31bed2`, round 2 the saved file later committed as `a5326db`, and round 3 commit `4cb0627`; round 4 reviewed the corrected attachment based on that commit.
 
 | Round | Necessary findings | Optional/trivial findings | Main changes made |
 | --- | ---: | ---: | --- |
 | 1 | 3 | 6 | Added block-descendant fallback and its precedence over Pure-mode combining, defined adjacency independently of the existing combining implementation, and clarified escaping complete tilde runs. |
 | 2 | 0 | 4 | Confirmed that all three necessary findings were resolved; only optional wording suggestions remained, and no further changes were made. |
+| 3 | 3 | 4 | Reviewed `4cb0627` against the instructor's PR comments; proposed three wording corrections, applied afterward (see "Reviews of `4cb0627`" below). |
+| 4 | 0 | 0 new; 4 carried forward | Reviewed the corrected specification; S1–S3 were applied exactly and no necessary findings remain. |
 
-#### Last specification review
+#### Specification review round 2 (`a5326db`)
 
 Model: Claude Opus 5.5, Medium effort.
 
@@ -597,7 +620,7 @@ Claude’s response:
 
 #### Implementation review rounds
 
-These rounds cover only the final submission.
+These rounds cover only the final submission. Rounds 1–4 reviewed the implementation committed as `49f3b7d`; round 5 reviewed its replacement at `4cb0627`, and round 6 checked the unchanged replacement against the corrected specification.
 
 | Round | Necessary findings | Optional/trivial findings | Main changes made |
 | --- | ---: | --- | --- |
@@ -605,6 +628,8 @@ These rounds cover only the final submission.
 | 2 | 1 | 3 | Corrected Faithful fallback whitespace-sharing checks so non-breaking spaces are not treated as merged ASCII spaces. |
 | 3 | 1 | 0 new; 3 carried forward | Corrected mixed space/NBSP edge runs so only the single shared ASCII space remains outside a Faithful fallback. |
 | 4 | 0 | 0 new; 3 carried forward | Confirmed mixed-whitespace handling and existing regression cases; only the earlier optional suggestions remained. |
+| 5 | 1 | 1 | Reviewed `4cb0627`: the code matches the specification and needs no change; proposed untracking `.review-ref/`, applied afterward (see "Reviews of `4cb0627`" below). |
+| 6 | 0 | 0 new; 1 carried forward | Reviewed the unchanged `4cb0627` code against the corrected specification; it still matches, and Windows verification with `--locked` passed (286 tests, 1 ignored). |
 
 The initial implementation and subsequent corrections were generated using Claude Opus 5.5, Medium effort, in Claude’s browser chat. Round 1 findings came from ChatGPT’s inspection of the generated patch; rounds 2–4 were performed by Claude.
 
@@ -621,7 +646,7 @@ Windows verification after the final correction:
 
 The integration tests include 22 Subscript tests. These Windows checks used the normal repository dependencies and lockfile, rather than Claude’s substitute offline dependency setup.
 
-#### Last implementation review
+#### Implementation review round 4 (`49f3b7d`)
 
 Model: Claude Opus 5.5, Medium effort. Tool: Claude browser chat.
 
@@ -669,4 +694,455 @@ The test counts above (39 unit, 249 integration, 22 Subscript) are for
 
 The final specification review above ran before `49f3b7d`, when htmd had no
 `<sub>` handler; the round 8 rerun in part 6 ran after `6a34ffd`, against
-htmd's own output.
+htmd's own output. The `.review-ref/` files cited in parts 4 and 5 are
+verbatim copies of pulldown-cmark v0.13.4's `src/firstpass.rs`, `src/parse.rs`,
+`src/puncttable.rs`, `src/scanners.rs`, `specs/strikethrough.txt`, and
+`specs/super_sub.txt`, which remain available at that upstream tag.
+
+#### Reviews of `4cb0627` (specification round 3, implementation round 5)
+
+Model: Claude Opus 5.5, Medium effort. Tool: Claude browser chat, with a cloud
+workspace; VS Code was not used for these reviews.
+
+Inspected version: commit `4cb0627`, the head of PR #10, fetched with git. The
+attached `translation_approach.md` and `submission.md` matched it, apart from a
+missing final newline in the specification. This session could not open the
+pull request, so Dustin Johnson supplied the instructor's comments, retrieved
+through ChatGPT's GitHub connection, without their line anchors.
+
+Prompts, in order (the second continued the first after Claude reported that it
+could not read the pull request):
+
+```text
+I am finalizing our team’s htmd Subscript project. Review the attached submission.md and translation_approach.md using Claude Opus 5.5, Medium effort.
+
+I want one thorough, consolidated review with the smallest complete set of necessary corrections. Before responding, check your proposed corrections against each other and against the examples so that fixing one issue does not introduce another. Do not stop after the first finding.
+
+SOURCE OF TRUTH
+
+The attachments are our current saved files. Read them directly. Do not substitute an earlier attachment or clone.
+
+Read the instructor’s review comments and team replies here:
+https://github.com/bjones1/htmd/pull/10
+
+Use the current pull-request source code when needed to check whether the implementation still matches the revised specification. Record the commit you inspected. Do not edit files, post comments, commit, or push.
+
+If you cannot access GitHub, identify all missing information in one request before proposing changes. Do not guess what the instructor meant or assume a teammate’s “fixed” reply proves correctness.
+
+REVIEW SCOPE
+
+Review only:
+- The Subscript specification.
+- Shared specification rules directly relevant to Subscript.
+- The Subscript implementation and affected helpers/tests.
+- Relevant submission.md records.
+
+Preserve other team members’ work and historical review transcripts.
+
+CHECK ALL INSTRUCTOR FEEDBACK
+
+Confirm that the current work:
+1. Escapes literal tildes in text nodes.
+2. Uses “move” rather than “trim” for relocated whitespace.
+3. Clearly distinguishes Pure and Faithful behavior.
+4. Follows the existing emphasis/strong-emphasis strategy.
+5. Addresses the objection that checking characters outside the subscript is impractical.
+6. Keeps superscript outside this project’s scope.
+7. Defines ASCII versus Unicode whitespace where needed.
+8. Explicitly translates subscript children from HTML into Markdown.
+9. Clearly attributes each person’s contributions and verification.
+10. Accurately identifies the LLM and actual Rust verification.
+
+IMPORTANT IMPLEMENTATION CHECK
+
+Our earlier implementation uses deferred private-use markers to check final emitted characters around subscript delimiters. Determine whether the current specification and instructor’s requested approach still permit that design.
+
+Do not resolve a conflict merely by rewriting the specification to justify existing code. Prefer the smallest change consistent with the instructor’s direction and the project’s existing architecture.
+
+Check whether later specification changes made any implementation behavior, test expectation, or submission claim outdated.
+
+SUBMISSION RECORDS
+
+Check that:
+- Final specification review tables exclude draft rounds.
+- Specification and implementation reviews have separate tables.
+- Counts and summaries match the recorded reviews.
+- Last-review prompts, responses, and model information are accurately recorded.
+- Historical reviews remain unchanged, with later developments explained separately.
+- No contribution, review round, test result, or successful check is invented.
+
+The browser reviews used Claude Opus 5.5, Medium effort. VS Code was used separately for local editing and commands. Preserve any accurately documented use of other tools in earlier rounds.
+
+BEFORE RETURNING YOUR ANSWER
+
+Mentally apply the complete proposed correction set and review the resulting specification again. Check its rules, examples, mode behavior, implementation implications, and submission wording together.
+
+Separate demonstrated correctness problems and unmet instructor requirements from optional style preferences. Do not expand scope or add speculative requirements. Do not recommend changes merely because you prefer different wording.
+
+OUTPUT
+
+Provide one consolidated answer containing:
+
+1. A brief verdict: ready, or necessary corrections remain.
+2. An instructor-feedback checklist showing addressed, not addressed, or not verifiable, with evidence.
+3. Every necessary correction, grouped by file. For each:
+   - Exact unique text to find with Ctrl+F.
+   - Exact replacement text in a copyable code block.
+   - A brief reason.
+   - Any dependent source-code, test, or submission changes.
+4. If code changes are necessary, provide one combined minimal patch against the exact inspected commit, including meaningful regression tests. Keep it separate from documentation replacements.
+5. A short, ordered application and verification sequence.
+6. Optional suggestions listed separately, without including them in the required edits.
+7. Necessary-finding count and a one-sentence review-table summary.
+
+Clearly distinguish inspection from execution. Claim tests passed only if you actually ran them, and disclose any substituted dependencies or other build limitations.
+
+Do not claim that a proposed correction has already been applied or reviewed in our local repository. Do not fabricate a final zero-findings review for changes that have not yet been applied and checked.
+```
+
+```text
+Proceed with one consolidated review of the current specification and implementation at the inspected commit 4cb0627. You have my authorization to perform both reviews now. Record only reviews you actually perform.
+
+Here is the instructor’s feedback from PR #10, retrieved through ChatGPT’s GitHub connection. Each comment was part of the instructor’s Changes Requested review:
+
+translation_approach.md:
+
+1. “You should escape `~` found in text nodes.”
+https://github.com/bjones1/htmd/pull/10#discussion_r4571034707
+
+2. “Use "move" instead of "trim", which usually means "remove."”
+https://github.com/bjones1/htmd/pull/10#discussion_r4571045933
+
+3. “Need two cases: one for Pure mode, another for Faithful mode. These should follow what htmd does for emphasis/strong emphasis.”
+https://github.com/bjones1/htmd/pull/10#discussion_r4571050745
+
+4. “This is impractical -- htmd doesn't have easy access to characters outside the subscript block. See the spec for emphasis/strong emphasis.”
+https://github.com/bjones1/htmd/pull/10#discussion_r4571055186
+
+5. “Superscript is outside the scope of this PR.”
+https://github.com/bjones1/htmd/pull/10#discussion_r4571072216
+
+6. “What kind of whitespace -- ASCII or Unicode?”
+https://github.com/bjones1/htmd/pull/10#discussion_r4571073896
+
+7. “Awkward and a bit contradictory here. Move it closer / combine with Faithful mode approach.”
+https://github.com/bjones1/htmd/pull/10#discussion_r4571081094
+
+8. “Missing: the contents of the `<sub>` element should be translated from HTML to Markdown.”
+https://github.com/bjones1/htmd/pull/10#discussion_r4571126263
+
+submission.md:
+
+9. “Which team member is this for? I only see Dustin's verification output.”
+https://github.com/bjones1/htmd/pull/10#discussion_r4571132893
+
+10. “Use Opus if you can.”
+https://github.com/bjones1/htmd/pull/10#discussion_r4571139489
+
+11. “You must install the Rust toolchain! Otherwise your LLM results are poor.”
+https://github.com/bjones1/htmd/pull/10#discussion_r4571142883
+
+Team replies from belivinge-2 say:
+- Tilde escaping was fixed.
+- “Trim” was replaced with “move.”
+- The rule now follows emphasis/strong emphasis.
+- Superscript was removed from the specification.
+- Rust was installed and the LLM rerun.
+- A shared Approach section now precedes both modes.
+- Sonnet usage was replaced with Opus.
+- Pure and Faithful cases were separated.
+- The verification section was intended for Daulet Khamzin.
+- Children are translated to Markdown in an inline context, with text tildes escaped.
+
+These are claims in replies, not independent proof. Check them against the inspected files. ChatGPT did not retrieve the original line anchors, so do not invent their exact locations. If a missing anchor changes your conclusion, identify that specific limitation.
+
+FACTS ABOUT MY RECORDS
+
+I am Dustin Johnson, GitHub drj228.
+
+My final specification and implementation reviews used Claude Opus 5.5, Medium effort, in a separate browser session. VS Code was used separately for editing and local commands.
+
+My implementation commit was 49f3b7d. My submission-record commit was adec166. The earlier implementation reviews apply to that earlier implementation, not automatically to its replacement.
+
+I do not know who ran the newer Part 2, Part 5, Part 6 or round 9 reviews, their exact settings, or whether their complete transcripts exist. Do not attribute them to me or invent those facts. I have not confirmed agreement to replace historical transcripts.
+
+HOW TO PROCEED
+
+1. Complete a fresh specification review and a fresh implementation review of the current inspected version. Evaluate them against the instructor’s comments above.
+
+2. Keep accurate historical reviews clearly labeled with the version they covered. Treat later reruns as separate records. Do not silently restore or delete teammates’ records. Provide targeted corrections that preserve available evidence and identify any remaining attribution questions for the team.
+
+3. Do not let unknown historical attribution block the current technical reviews. Separate what you can complete now from facts only a teammate can confirm.
+
+4. Review the tracked .review-ref directory: determine whether it is required by the project or build. Recommend removing it if it is unnecessary scratch material. Do not assume removal is safe without checking references.
+
+5. Return one consolidated correction set with exact unique Ctrl+F text and replacement blocks. If implementation changes are necessary, provide one minimal incremental patch against the inspected commit with regression tests.
+
+6. Check all proposed changes together before responding. Avoid optional rewrites. Clearly distinguish necessary corrections, optional suggestions, and unresolved factual questions.
+
+7. Provide the exact submission.md additions for the two reviews you actually perform, including the model, prompt, findings, inspected commit and execution limitations. Do not record proposed fixes as already applied or claim a post-fix review occurred unless it actually did.
+
+Do not commit, push, or post replies. Do not modify historical test results to match the current build. Keep earlier Windows verification attached to the earlier version and report current verification separately.
+```
+
+Executed, in a substitute offline setup rather than a normal build: crates.io
+was unreachable, so the dependencies were GitHub checkouts at the locked
+versions, `criterion` was dropped, and the lock was re-resolved; nothing ran
+with `--locked`, and nothing ran on Windows.
+
+* `cargo build`, `cargo clippy -- --deny warnings`, and `cargo fmt --check`:
+  clean.
+* `cargo test`: 38 unit tests passed (1 ignored), 244 integration tests passed
+  (17 in `subscript_tests.rs`), and 4 doc tests passed.
+* All 16 rows of the Subscript table matched htmd's output in both modes.
+* 24 further inputs were converted with htmd and read back with
+  pulldown-cmark 0.13.4 (`ENABLE_SUBSCRIPT | ENABLE_STRIKETHROUGH`); every
+  `~…~` that htmd wrote read as a subscript.
+* With `.review-ref/` removed, the build and all 286 tests still passed.
+
+Specification review (round 3): 3 necessary findings, 4 optional.
+
+1. Step 2 still says "trimming" for a line ending that moves outside the
+   tildes (instructor comment 2).
+2. "Pure mode always writes [emphasis] with its delimiters" is false: Pure mode
+   drops the delimiters of an empty or whitespace-only emphasis.
+3. The shared Approach step 1 translates every subscript's children in an
+   inline context, while each mode's step 1 handles a subscript holding a block
+   differently (Pure translates its children in the incoming context, as the
+   last table row shows); the order was not stated.
+
+Optional: the antecedent of "This choice" in the type 7 bullet; "spaces" in the
+tilde-run rule could say ASCII spaces; the emphasis section's "run of any
+inline element" is wider than htmd's run code, so adjacent subscripts whose
+first holds an element are written as two subscripts; "step 3 above" inside
+each mode's own step 3 could name the Approach.
+
+Implementation review (round 5): no change to the code is needed; it matches
+the specification. 1 necessary finding, 1 optional.
+
+1. `.review-ref/` holds verbatim copies of six pulldown-cmark v0.13.4 files
+   without that project's license notice. Nothing in the build, tests, or CI
+   uses them, and `cargo package` would ship them in the crate.
+
+Optional: the flag that marks subscript content is thread-local, so a custom
+handler that runs a separate conversion inside a subscript would escape that
+conversion's tildes too.
+
+The review also proposed record corrections to this file: provenance notes for
+parts 2, 5, and 6; labeled rows for the original and rerun rounds 7 and 8;
+version labels for the final-submission review rounds. None of the proposed
+corrections had been applied when this review ended, and no review of the
+corrected files had been performed. Who ran the reruns in parts 2, 5, and 6,
+and round 9, is not recorded here; those questions are for the team.
+
+
+##### Complete Claude review response
+
+The following is the complete response for the reviews recorded above.
+The preceding findings summary accompanies this original response.
+
+> I’ll do both reviews against `4cb0627` now. First I’ll pin down the evidence the submission corrections will cite:
+>
+> - which commits introduced and replaced each record;
+> - whether anything references `.review-ref/`;
+> - which spec versions my earlier reviews covered.
+>
+> The project builds and all 286 tests pass with `.review-ref/` removed. The packaging check printed zero files, which may just mean the command failed offline, so I’ll look at its output directly.
+>
+> The anchors I’ll use are all unique. Two more exact lines remain: the last row of each final-submission review table, where the new rows go.
+>
+> Necessary corrections remain: three wording fixes in the spec, removing the tracked `.review-ref/` folder, and several record corrections in `submission.md`. The code itself needs no change; it matches the spec and passes everything.
+>
+> The exact find-and-replace text is in `subscript-corrections.md`. I checked every find string against your attached files, and each matches exactly once. I applied all the edits together to scratch copies and reread the results, and nothing conflicts. The file also holds the record of these two reviews to add to `submission.md`, with your two prompts quoted verbatim.
+>
+> ### What I inspected and executed
+>
+> - **Version:** commit `4cb0627`, the head of PR #10, fetched with git. Your attached files match it.
+> - **Instructor comments:** I used the text you supplied. I still couldn’t open the PR, so I don’t have the comments’ line anchors. Only comment 7 is affected; see the checklist.
+> - **Executed,** in my substitute offline setup: dependencies from GitHub checkouts, `criterion` dropped, lock re-resolved, so nothing ran with `--locked` and nothing ran on Windows.&#x20;
+>   - `cargo build`, `cargo clippy -- --deny warnings` and `cargo fmt --check` are clean.
+>   - `cargo test`: 38 unit (1 ignored), 244 integration (17 subscript) and 4 doc tests pass.
+>   - All 16 rows of the Subscript table match htmd’s output in both modes.
+>   - I converted 24 more inputs (tables, headings, links, emphasis, blockquotes, list items, non-breaking and ideographic spaces, both hard-break styles, adjacency, code, math, alt text). Every `~…~` htmd wrote reads as a subscript in pulldown-cmark 0.13.4.
+>   - With `.review-ref/` removed, the build and all 286 tests still pass.
+>
+> ### Instructor-feedback checklist
+>
+> | #  | Comment                                         | Status               | Evidence                                                                                                                                                                                                                                                    |
+> | -- | ----------------------------------------------- | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+> | 1  | Escape `~` in text nodes                        | Addressed            | Spec and code escape runs of one or two everywhere, and every tilde of a longer run at a text-node start or inside a subscript. A run of three or more in mid-sentence stays as is: it can’t act as a delimiter, and an existing test expects it unescaped. |
+> | 2  | “Move”, not “trim”                              | One leftover         | Step 2 still says “trimming” for a line ending that is moved (S1). Pure step 1’s “trim” really removes newlines, so it is correct.                                                                                                                          |
+> | 3  | Separate Pure and Faithful cases, like emphasis | Addressed            | Separate step lists for each mode, and a Pure column in the table.                                                                                                                                                                                          |
+> | 4  | Don’t inspect characters outside the subscript  | Addressed            | No neighbor inspection. The marker design is gone from both spec and code.                                                                                                                                                                                  |
+> | 5  | Superscript out of scope                        | Addressed            | No mention in the spec, and no caret handling in the code.                                                                                                                                                                                                  |
+> | 6  | ASCII or Unicode whitespace?                    | Addressed            | Defined as `char::is_whitespace`, which is Unicode. One unqualified “spaces” remains; it’s optional unless the comment was anchored there.                                                                                                                  |
+> | 7  | Awkward and contradictory                       | One leftover         | The shared step 1 contradicts each mode’s step 1 (S3). Without the anchor I can’t tell if this is the exact passage, but it is a contradiction either way.                                                                                                  |
+> | 8  | Translate children to Markdown                  | Addressed            | Step 1 says so explicitly.                                                                                                                                                                                                                                  |
+> | 9  | Whose verification is this?                     | Partly               | Part 2 now has a Khamzin Daulet heading, but its content was rewritten in a later commit by a different git author (U1).                                                                                                                                    |
+> | 10 | Use Opus                                        | Partly               | Parts 2 and 5 are now Opus. The model for the part 6 rerun isn’t recorded.                                                                                                                                                                                  |
+> | 11 | Install Rust                                    | Addressed for part 2 | Part 2 shows cargo 1.99.1. Who ran it isn’t recorded.                                                                                                                                                                                                       |
+>
+> The team’s replies are true for items 1–5 and 8. They’re only partly true for 2, 7 and 9–11, as the table shows.
+>
+> ### Necessary corrections
+>
+> **`translation_approach.md`**
+>
+> - **S1:** “trimming only the line ending” becomes “moving only the line ending” (comment 2).
+> - **S2:** the claim that Pure mode “always writes” emphasis with its delimiters is false. htmd drops them for empty or whitespace-only emphasis; the paragraph is rewrapped with the fix.
+> - **S3:** shared step 1 says every subscript’s children are translated in an inline context. Read in order, that would make the last table row’s Pure result `ab` instead of `a⏎⏎b`. The fix says each mode’s step 1 comes first, which is what the code does.
+>
+> **Repository**
+>
+> - **R1, untrack `.review-ref/`:** it holds verbatim copies of six pulldown-cmark v0.13.4 files, without pulldown-cmark’s license notice.&#x20;
+>   - Nothing in the build, the tests or CI uses them. Only historical transcripts mention the folder.
+>   - `cargo package` would ship them inside the crate.
+>   - The file gives the commands to untrack the folder but keep it locally, plus a `.gitignore` line, and a note for `submission.md` saying where the upstream originals are.
+>
+> **`submission.md`** (these preserve the evidence; nothing is deleted or silently restored)
+>
+> - **U1, U2 and U3:** provenance notes for parts 2, 5 and 6. Each names the commit that introduced the current text (`f371119`, git author ar_matzhan) and the commit holding the original (`092b833` by Daulet Khamzin; `a31bed2` by you), and says the rerun’s runner isn’t recorded. Part 6’s heading and your contribution line no longer attribute the rerun to you.
+> - **U4:** the original round 7 and 8 rows go back into the table, labeled “original”, beside the reruns labeled “rerun”. Round 9 is marked as having no recorded transcript.
+> - **U5:** version labels for the final-submission reviews:&#x20;
+>   - spec rounds 1–2 covered `a31bed2` and `a5326db`;
+>   - implementation rounds 1–4 covered `49f3b7d`;
+>   - the two “Last … review” headings are renamed to name those versions;
+>   - your contributions line now names `a5326db` and `49f3b7d`.
+> - **U6:** the record of today’s two reviews, to paste at the end of the file. It includes the model, both prompts, commit `4cb0627`, the build limitations, and the findings. It states that none of the corrections had been applied and no review of the corrected files has happened.
+>
+> **No code patch is needed.** The implementation matches the spec, including after the S1–S3 wording changes, which change no behavior.
+>
+> ### Apply and verify
+>
+> 1. Apply S1–S3 to the spec and U1–U6 to `submission.md` in VS Code, which keeps CRLF line endings.
+> 2. Run `git rm -r --cached .review-ref` and add the `.gitignore` line.
+> 3. Run `cargo fmt --check`, then `cargo build --locked`, `cargo clippy --locked -- --deny warnings` and `cargo test --locked`. Since no code changes, you should see the same 38 / 244 / 4 counts.
+> 4. Run `git diff --check`, and check that `git status` lists only the spec, `submission.md` and `.gitignore`, plus the deleted `.review-ref/` files.
+> 5. Settle the open questions below with your teammates, and update the notes if anyone confirms.
+> 6. Run a fresh review of the corrected files and record it separately. These two reviews don’t count as a post-fix review.
+>
+> ### Optional suggestions
+>
+> - **Spec:**&#x20;
+>   - “This choice” in the type 7 bullet now seems to refer to the subscript sentence.
+>   - The tilde-run rule’s “spaces” could say “ASCII spaces”.
+>   - The emphasis section’s “run of any inline element” is wider than htmd’s actual run handling. So `<sub> <em>a</em> </sub><sub> b </sub>` comes out as two Markdown subscripts; the result is still valid.
+>   - “Step 3 above”, written inside each mode’s own step 3, could name the shared Approach.
+> - **Code:** the flag that marks subscript content is thread-local. A custom handler that runs a separate conversion inside a subscript would also escape tildes in that conversion.
+>
+> ### Questions only the team can answer
+>
+> 1. Who ran the reruns now in parts 2, 5 and 6, and with what model and effort?
+> 2. Did Daulet Khamzin and you agree to have your original transcripts replaced?
+> 3. Does a transcript of round 9 exist anywhere?
+> 4. Who wrote commits `6a34ffd` through `4cb0627`? Their git author is ar_matzhan; the PR replies come from belivinge-2. Whoever it was should get a contribution line.
+> 5. Did anyone review the spec again after the part 5 rerun’s findings were applied?
+>
+> ### Result
+>
+> - **Necessary corrections:** 3 in the spec, 1 in the repository, and 6 record corrections in `submission.md`.
+> - **No code change** is needed.
+> - **Review-table summary:** At `4cb0627` the implementation matches the specification and passes all checks in a substitute offline build, but three spec wording fixes, untracking `.review-ref/`, and record corrections in `submission.md` are still needed.
+
+#### Windows verification after the documentation corrections
+
+Dustin Johnson ran these commands in the local Windows repository after applying
+the documentation corrections and untracking `.review-ref/`, with the replacement
+implementation from `4cb0627`. These results are separate from the earlier
+verification of `49f3b7d`.
+
+| Command | Result |
+| --- | --- |
+| `cargo fmt --check` | Passed; no formatting differences reported |
+| `cargo build --locked` | Passed |
+| `cargo clippy --locked -- --deny warnings` | Passed |
+| `cargo test --locked` | Passed: 38 unit tests, 244 integration tests, and 4 documentation tests; 1 unit test ignored |
+
+Total: 286 tests passed, 0 failed, and 1 ignored. The integration tests include
+17 Subscript tests. This Windows run used the repository lockfile and normal
+dependencies, rather than Claude's substitute offline dependency setup.
+
+#### Last specification and implementation reviews
+
+Specification round 4; implementation round 6.
+
+Model: Claude Opus 5.5, Medium effort. Tool: Claude browser chat.
+
+Reviewed inputs: the corrected specification and submission attachments, with
+the Rust implementation unchanged from `4cb0627`. Claude did not rerun commands
+in this round; the normal Windows verification is recorded above.
+
+The response below found no necessary specification or implementation corrections
+and three submission-record corrections. Those record corrections were applied
+afterward, and these review rows, prompt, and response were then recorded; this
+does not claim another LLM review of the resulting submission document.
+
+Prompt:
+
+```text
+Perform the final post-correction review using these two attachments as authoritative.
+
+Check that S1–S3 and U1–U6 were incorporated correctly, historical records remain accurately attributed, and no necessary contradictions remain. The Rust implementation is unchanged from 4cb0627.
+
+The latest Windows verification passed:
+cargo fmt --check
+cargo build --locked
+cargo clippy --locked -- --deny warnings
+cargo test --locked
+
+Results: 38 unit tests, 244 integration tests, and 4 documentation tests passed; 1 unit test ignored. The integration tests include 17 Subscript tests.
+
+Review both corrected files completely within our established scope before responding. Report only necessary corrections and unmet assignment requirements; list optional suggestions separately. Do not propose stylistic rewrites or edit files.
+
+Return separate specification and implementation conclusions, finding counts, and one-sentence review-table summaries. State which files and code version you inspected, distinguishing my Windows results from anything you executed.
+```
+
+Claude response (Markdown formatting normalized; findings and wording retained):
+
+> I found no remaining problems in the specification or the code. I found 3 small corrections needed in `submission.md`, and I haven’t edited any files.
+>
+> **What I inspected and what I ran**
+>
+> - **Files:** your two attachments (`translation_approach.md` and `submission.md`). I compared each one line by line with the result I expected after S1–S3 and U1–U6.
+> - **Code version:** `4cb0627`. I didn’t re-run anything this time, because you said the Rust code hasn’t changed.
+> - **What I ran earlier, at `4cb0627`:** build, Clippy and fmt were clean, and 38 unit, 244 integration and 4 doc tests passed. All 16 Subscript table rows matched in both modes. Those runs used my substitute offline setup, so nothing ran with `--locked` or on Windows.
+> - **Your Windows results** (fmt, build, Clippy and tests, all with `--locked`): I take these as you reported them. I didn’t run them. Their totals (286 passed, 1 ignored) match my earlier counts.
+> - **Not checked:** I can’t confirm from these two files that `.review-ref/` is untracked and in `.gitignore` (R1). Your Windows section says it was done.
+>
+> ### Specification conclusion
+>
+> **0 necessary, 0 new optional.** S1, S2 and S3 are in exactly as proposed; the only other difference is a final newline. Nothing in the Subscript section or the shared rules contradicts anything else. The 4 optional suggestions from round 3 are unchanged.
+>
+> **Review-table summary:** “Reviewed the corrected specification; S1–S3 were applied exactly and no necessary findings remain.”
+>
+> ### Implementation conclusion
+>
+> **0 necessary, 0 new optional.** The code at `4cb0627` still matches the specification. S1–S3 changed wording only, not behavior. The optional thread-local note from round 5 still applies.
+>
+> **Review-table summary:** “Reviewed the unchanged `4cb0627` code against the corrected specification; it still matches, and Windows verification with `--locked` passed (286 tests, 1 ignored).”
+>
+> ### Necessary corrections to `submission.md`
+>
+> U1–U4 and U6 are in exactly as proposed. You rewrote the U5 contribution line and added two new sections, “Complete Claude review response” and “Windows verification after the documentation corrections”. Three corrections are needed, and each find string appears exactly once:
+>
+> 1. **The contribution line credits Claude with all the reviewing.** The file itself says round 1 findings came from ChatGPT, so it disagrees with itself.
+>    - Find: used Claude to implement and review the feature and regression tests committed as `49f3b7d`
+>    - Replace: used Claude to implement the feature and regression tests committed as `49f3b7d` and to perform implementation review rounds 2–4
+> 2. **Two table rows still say “not yet applied”,** but your new Windows section says the corrections were applied. These rows describe what happened after each review, not a moment in time, so they now contradict it.
+>    - Find: proposed three wording corrections, not yet applied
+>    - Replace: proposed three wording corrections, applied afterward
+>    - Find: proposed untracking `.review-ref/`, not yet applied
+>    - Replace: proposed untracking `.review-ref/`, applied afterward
+> 3. **The record of the `4cb0627` reviews says no review of the corrected files “has been performed”.** That stops being true once you record this review. The sentence’s first half is already in the past tense.
+>    - Find: corrected files has been performed.
+>    - Replace: corrected files had been performed.
+>
+> Your Part 2/5/6 provenance notes, the original and rerun rows, the label saying round 9 has no transcript, and the historical `49f3b7d` Windows results are all still attributed correctly. Nothing names who ran the reruns. The new Windows section keeps its results separate from the `49f3b7d` ones.
+>
+> **Still needed:** rows for this review (specification round 4, implementation round 6) and its prompt aren’t in the file yet. The two summaries above are written for those rows.
+>
+> ### Optional suggestions
+>
+> - Four lines in the quoted response end with `&#x20;`, left over from copying. It shows up only as a space, but you could delete it.
+> - The quoted section is the reply as shown in chat, including progress notes. It doesn’t include `subscript-corrections.md`. A short note saying so would make “complete” exact.
+> - The contribution line could mention your Windows verification of the corrected `4cb0627`.

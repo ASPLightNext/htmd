@@ -805,13 +805,14 @@ subscript or strikethrough.
 
 Approach:
 
-1. Translate the element's children to Markdown in an inline context, escaping
+1. Each mode's step 1 below comes first. For a subscript it does not handle,
+   translate the element's children to Markdown in an inline context, escaping
    the tildes of their text nodes as described above. The result is the
    content.
 2. Split the content into its leading whitespace, the remaining content, and
    its trailing whitespace, with whitespace as defined above. In Pure mode every
    hard break at either end counts as whitespace: with `BrStyle::Backslash`,
-   trimming only the line ending of a trailing `\⏎` break would leave its
+   moving only the line ending of a trailing `\⏎` break would leave its
    backslash before the closing `~`, escaping it.
 3. The subscript can be written as Markdown only if all of these hold:
    1. The remaining content is not empty: `~~` is not an empty subscript.
@@ -856,11 +857,12 @@ In `TranslationMode::Pure`, which writes no HTML:
 4. Otherwise, write the content, including its leading and trailing whitespace,
    without tildes.
 
-Unlike emphasis, which Pure mode always writes with its delimiters, step 4
-drops the tildes. A single `~` cannot be intraword, so `H~2~O` would read as
-literal tildes rather than a subscript; and nested subscripts cannot be written
-as `~~a~~`, which reads as strikethrough. So when an inner subscript is written
-as `~a~`, step 3.3 drops the outer element's tildes:
+Unlike emphasis, which Pure mode writes with its delimiters whenever it holds
+more than whitespace, step 4 drops the tildes. A single `~` cannot be
+intraword, so `H~2~O` would read as literal tildes rather than a subscript; and
+nested subscripts cannot be written as `~~a~~`, which reads as strikethrough.
+So when an inner subscript is written as `~a~`, step 3.3 drops the outer
+element's tildes:
 `x<sub>␣<sub>␣a␣</sub>␣</sub>y` becomes `x␣~a~␣y`.
 
 Adjacent subscripts are an adjacent-element run, as described in the emphasis
