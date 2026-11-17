@@ -5,3 +5,4 @@ output_*.md
 *.estimates.json
 .idea/workspace.xml
 .review-ref/
+.idea/
